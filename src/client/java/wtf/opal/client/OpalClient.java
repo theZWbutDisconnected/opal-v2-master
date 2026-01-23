@@ -84,6 +84,7 @@ public final class OpalClient {
         if (this.moduleRepository == null) {
             this.moduleRepository = ModuleRepository.fromModules(
                     // Combat
+                    new AntiBotModule(),
                     new KillAuraModule(),
                     new BlockModule(),
                     new ReachModule(),
