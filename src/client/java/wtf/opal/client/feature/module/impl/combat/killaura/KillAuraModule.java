@@ -126,10 +126,13 @@ public final class KillAuraModule extends Module {
 
     private boolean isAttackSwingAvailable(final CurrentTarget target) {
         final VelocityModule velocityModule = OpalClient.getInstance().getModuleRepository().getModule(VelocityModule.class);
-        if (target.getKillAuraTarget().isAttackAvailable() || this.attacks > 0 ||
-                velocityModule.isEnabled() && velocityModule.getActiveMode() instanceof WatchdogVelocity watchdogVelocity && watchdogVelocity.isSprintReset()) {
-            return true;
+
+        boolean specialCondition = target.getKillAuraTarget().isAttackAvailable() || this.attacks > 0 ||
+                velocityModule.isEnabled() && velocityModule.getActiveMode() instanceof WatchdogVelocity watchdogVelocity && watchdogVelocity.isSprintReset();
+        if (specialCondition) {
+            return SwingDelay.isSwingAvailable(this.settings.getCpsProperty(), false);
         }
+        
         return SwingDelay.isSwingAvailable(this.settings.getCpsProperty(), false);
     }
 

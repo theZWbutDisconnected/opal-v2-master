@@ -8,6 +8,7 @@ import wtf.opal.client.feature.module.property.impl.number.NumberProperty;
 import wtf.opal.utility.misc.chat.ChatUtility;
 import wtf.opal.utility.misc.math.RandomUtility;
 
+import java.util.Random;
 import java.util.function.BooleanSupplier;
 
 public final class CPSProperty {
@@ -46,7 +47,7 @@ public final class CPSProperty {
     }
 
     public int getClickDelay() {
-        return 1000 / getCPS();
+        return 1000 / getCPS() + new Random().nextInt(10);
     }
 
     private long nextClick;

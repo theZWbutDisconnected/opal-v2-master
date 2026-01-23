@@ -9,6 +9,7 @@ import wtf.opal.client.feature.helper.impl.target.TargetFlags;
 import wtf.opal.client.feature.helper.impl.target.TargetList;
 import wtf.opal.client.feature.helper.impl.target.TargetProperty;
 import wtf.opal.client.feature.helper.impl.target.impl.TargetLivingEntity;
+import wtf.opal.client.feature.module.impl.combat.AntiBotModule;
 import wtf.opal.client.feature.module.impl.combat.killaura.KillAuraSettings;
 import wtf.opal.utility.player.PlayerUtility;
 import wtf.opal.utility.player.RaytracedRotation;
@@ -83,6 +84,11 @@ public final class KillAuraTargeting {
 
             final LivingEntity entity = target.getEntity();
             if (entity.isDead() || !entity.isAttackable() || !RotationUtility.isEntityInFOV(entity, this.settings.getFov())) {
+                iterator.remove();
+                continue;
+            }
+
+            if (AntiBotModule.isBot(entity)) {
                 iterator.remove();
                 continue;
             }
