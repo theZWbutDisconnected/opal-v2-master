@@ -10,13 +10,17 @@ import wtf.opal.client.binding.type.InputType;
 import wtf.opal.client.feature.module.Module;
 import wtf.opal.client.feature.module.UnknownModuleException;
 import wtf.opal.client.feature.module.property.Property;
-
+import wtf.opal.client.feature.module.property.impl.bool.BooleanProperty;
+import wtf.opal.client.feature.module.property.impl.mode.ModeProperty;
+import wtf.opal.client.feature.module.property.impl.number.BoundedNumberProperty;
+import wtf.opal.client.feature.module.property.impl.number.NumberProperty;
 import wtf.opal.utility.data.serializer.PairSerializer;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 
 import static wtf.opal.client.Constants.DIRECTORY;
@@ -105,34 +109,62 @@ public final class SaveUtility {
     }
 
     public static void saveConfig(final String name) {
+        try {
+            final File file = new File(DIRECTORY, name + ".json");
+            final JsonArray modulesArray = new JsonArray();
+
+            for (final Module module : OpalClient.getInstance().getModuleRepository().getModules()) {
+                final JsonObject moduleJson = new JsonObject();
+                moduleJson.addProperty("name", module.getId());
+                moduleJson.addProperty("enabled", module.isEnabled());
+                moduleJson.addProperty("visible", module.isVisible());
+
+                final JsonArray propertiesArray = new JsonArray();
+                for (final Property<?> property : module.getPropertyList()) {
+                    final JsonObject propertyJson = new JsonObject();
+                    propertyJson.addProperty("name", property.getId());
+                    propertyJson.add("value", GSON.toJsonTree(property.getValue()));
+                    propertiesArray.add(propertyJson);
+                }
+                moduleJson.add("properties", propertiesArray);
+                modulesArray.add(moduleJson);
+            }
+
+            Files.writeString(
+                    file.toPath(),
+                    GSON.toJson(modulesArray)
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static boolean loadConfig(final String jsonString) {
         try {
             final List<?> jsonModules = GSON.fromJson(jsonString, List.class);
-
+    
             for (final Object jsonModuleObj : jsonModules) {
                 final LinkedTreeMap<?, ?> jsonModule = (LinkedTreeMap<?, ?>) jsonModuleObj;
                 final String jsonModuleID = (String) jsonModule.get("name");
                 final Boolean jsonEnabled = (Boolean) jsonModule.get("enabled");
                 final Boolean jsonVisible = (Boolean) jsonModule.get("visible");
                 final List<?> jsonProperties = (List<?>) jsonModule.get("properties");
-
+    
                 for (final Module clientModule : OpalClient.getInstance().getModuleRepository().getModules()) {
                     if (jsonModuleID.equals(clientModule.getId())) {
-
+    
                         if (jsonEnabled != null && jsonEnabled != clientModule.isEnabled()) {
                             clientModule.setEnabled(jsonEnabled);
                         }
                         if (jsonVisible != null && jsonVisible != clientModule.isVisible()) {
                             clientModule.setVisible(jsonVisible);
                         }
-
+    
                         for (final Object jsonPropertyObj : jsonProperties) {
                             final LinkedTreeMap<?, ?> jsonProperty = (LinkedTreeMap<?, ?>) jsonPropertyObj;
                             final String propertyName = (String) jsonProperty.get("name");
                             final Object propertyValue = jsonProperty.get("value");
-
+    
                             for (final Property<?> clientProperty : clientModule.getPropertyList()) {
                                 if (propertyName.equals(clientProperty.getId())) {
                                     clientProperty.applyValue(propertyValue);
@@ -147,6 +179,22 @@ public final class SaveUtility {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public static boolean loadConfigFromFile(final String configName) {
+        try {
+            final File configFile = new File(DIRECTORY, configName + ".json");
+            
+            if (!configFile.exists()) {
+                return false;
+            }
+    
+            final String jsonContent = Files.readString(configFile.toPath());
+            return loadConfig(jsonContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 }
