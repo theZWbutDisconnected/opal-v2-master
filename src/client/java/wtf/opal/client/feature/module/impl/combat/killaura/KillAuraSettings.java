@@ -30,7 +30,7 @@ public final class KillAuraSettings {
     public KillAuraSettings(final KillAuraModule module) {
         this.rotationProperty = new RotationProperty(InstantRotationModel.INSTANCE);
         this.targetProperty = new TargetProperty(true, false, false, false, false, true);
-        this.cpsProperty = new CPSProperty(module, "Attack CPS", true);
+        this.cpsProperty = new CPSProperty(module, "Attack CPS", false);
         this.swingCpsProperty = new CPSProperty(module, "Swing CPS", false).hideIf(this.cpsProperty::isModernDelay);
 
         this.rotationRange = new NumberProperty("Rotation range", 5.D, 3.D, 8.D, 0.1D);

@@ -129,11 +129,12 @@ public final class KillAuraModule extends Module {
 
         boolean specialCondition = target.getKillAuraTarget().isAttackAvailable() || this.attacks > 0 ||
                 velocityModule.isEnabled() && velocityModule.getActiveMode() instanceof WatchdogVelocity watchdogVelocity && watchdogVelocity.isSprintReset();
-        if (specialCondition) {
-            return SwingDelay.isSwingAvailable(this.settings.getCpsProperty(), false);
-        }
-        
-        return SwingDelay.isSwingAvailable(this.settings.getCpsProperty(), false);
+
+//        if (specialCondition) {
+//            return true;
+//        }
+
+        return SwingDelay.isSwingAvailable(this.settings.getCpsProperty(), true);
     }
 
     private int attacks;

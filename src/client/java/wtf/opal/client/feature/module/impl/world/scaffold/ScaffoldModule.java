@@ -244,11 +244,12 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
             blockCache = null;
             return;
         }
-        if (this.settings.isSameYEnabled() && this.settings.isAutoJump() && LocalDataWatch.get().getKnownServerManager().getCurrentServer() instanceof HypixelServer && (mc.player.isOnGround())) {
+        if (this.settings.isSameYEnabled() && this.settings.isAutoJump() && mc.player.isOnGround()) {
             RotationMouseHandler handler = RotationHelper.getHandler();
             if(mc.player != null) {
-                if(rotation != null)
-                handler.rotate(new Vec2f(mc.gameRenderer.getCamera().getYaw() + (44f * Math.signum(rotation.rotation().x)), mc.gameRenderer.getCamera().getPitch()), InstantRotationModel.INSTANCE);
+                if(rotation != null) {
+                    handler.rotate(new Vec2f(mc.gameRenderer.getCamera().getYaw() + (44f * Math.signum(rotation.rotation().x)), mc.gameRenderer.getCamera().getPitch()), InstantRotationModel.INSTANCE);
+                }
             }
             this.rotation = null;
             return;
@@ -281,7 +282,7 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
 
         final ModuleRepository moduleRepository = OpalClient.getInstance().getModuleRepository();
         final boolean updateY = !settings.isSameYEnabled()
-              //  || mc.options.useKey.isPressed()
+               || mc.options.useKey.isPressed()
                 || (this.settings.isAutoJump() && PlayerUtility.isKeyPressed(mc.options.jumpKey))
                 || mc.player.isOnGround()
                 || Math.abs(Math.floor(mc.player.getY() - sameYPos)) > 3
