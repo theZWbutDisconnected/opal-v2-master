@@ -1,8 +1,10 @@
 package wtf.opal.mixin;
 
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
@@ -18,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import wtf.opal.client.OpalClient;
 import wtf.opal.client.feature.module.impl.utility.inventory.ChestStealerModule;
+import wtf.opal.event.EventDispatcher;
+import wtf.opal.event.impl.game.player.interaction.InvCloseEvent;
 
 import java.awt.*;
 import java.util.Map;
@@ -62,4 +66,14 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> {
         }
     }
 
+
+    @Inject(
+            method = "close",
+            at = @At("HEAD")
+    )
+    private void onClose(CallbackInfo ci) {
+        if ((Object) this instanceof InventoryScreen) {
+            EventDispatcher.dispatch(new InvCloseEvent());
+        }
+    }
 }

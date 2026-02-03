@@ -34,6 +34,7 @@ import wtf.opal.client.feature.module.impl.movement.InventoryMoveModule;
 import wtf.opal.client.feature.module.impl.visual.AnimationsModule;
 import wtf.opal.duck.ClientPlayerEntityAccess;
 import wtf.opal.event.EventDispatcher;
+import wtf.opal.event.impl.client.SetScreenEvent;
 import wtf.opal.event.impl.game.JoinWorldEvent;
 import wtf.opal.event.impl.game.PostGameTickEvent;
 import wtf.opal.event.impl.game.PreGameTickEvent;
@@ -125,10 +126,8 @@ public abstract class MinecraftClientMixin {
     )
     private void hookSetScreen(Screen screen, CallbackInfo ci) {
         if (OpalClient.getInstance().isPostInitialization()) {
-            final InventoryMoveModule inventoryMove = OpalClient.getInstance().getModuleRepository().getModule(InventoryMoveModule.class);
-            if (inventoryMove.isEnabled() && !inventoryMove.isBlocked()) {
-                PlayerUtility.updateMovementKeyStates();
-            }
+            final SetScreenEvent event = new SetScreenEvent(screen);
+            EventDispatcher.dispatch(event);
         }
     }
 

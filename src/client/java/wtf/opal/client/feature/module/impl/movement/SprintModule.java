@@ -1,17 +1,19 @@
 package wtf.opal.client.feature.module.impl.movement;
 
+import net.minecraft.client.option.KeyBinding;
 import wtf.opal.client.OpalClient;
 import wtf.opal.client.feature.module.Module;
 import wtf.opal.client.feature.module.ModuleCategory;
 import wtf.opal.client.feature.module.property.impl.bool.BooleanProperty;
+import wtf.opal.event.impl.game.PostGameTickEvent;
 import wtf.opal.event.impl.game.PreGameTickEvent;
 import wtf.opal.event.impl.game.player.movement.KeepSprintEvent;
 import wtf.opal.event.subscriber.Subscribe;
+import wtf.opal.utility.player.PlayerUtility;
 
 import static wtf.opal.client.Constants.mc;
 
 public final class SprintModule extends Module {
-
     private final BooleanProperty omniSprint = new BooleanProperty("Omnidirectional", false);
     private final BooleanProperty keepSprint = new BooleanProperty("Keep sprint", true);
 
@@ -25,6 +27,7 @@ public final class SprintModule extends Module {
     public void onPreGameTick(final PreGameTickEvent event) {
         mc.options.sprintKey.setPressed(true);
     }
+
 
     @Subscribe
     public void onKeepSprint(final KeepSprintEvent event) {
