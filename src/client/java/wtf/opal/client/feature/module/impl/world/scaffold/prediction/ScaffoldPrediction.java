@@ -1,6 +1,7 @@
 package wtf.opal.client.feature.module.impl.world.scaffold.prediction;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.entity.EntityPose;
@@ -20,6 +21,7 @@ import wtf.opal.client.OpalClient;
 import wtf.opal.client.feature.module.Module;
 import wtf.opal.client.feature.module.ModuleCategory;
 import wtf.opal.client.feature.module.impl.movement.longjump.LongJumpModule;
+import wtf.opal.client.feature.module.impl.visual.overlay.impl.dynamicisland.IslandTrigger;
 import wtf.opal.client.feature.module.impl.world.breaker.BreakerModule;
 import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldIsland;
 import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldModule;
@@ -43,10 +45,10 @@ import java.util.Comparator;
 import static wtf.opal.client.Constants.mc;
 import static wtf.opal.client.feature.module.impl.world.scaffold.prediction.ScaffoldPredictionSettings.*;
 
-public class ScaffoldPrediction extends Module {
+public class ScaffoldPrediction extends Module implements IslandTrigger {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
-    private final ScaffoldIsland dynamicIsland = new ScaffoldIsland(this);
+    private final ScaffoldPredictionIsland dynamicIsland = new ScaffoldPredictionIsland(this);
     private final ScaffoldPredictionSettings settings = new ScaffoldPredictionSettings(this);
 
     private static final double[] placeOffsets = new double[]{
@@ -549,10 +551,31 @@ public class ScaffoldPrediction extends Module {
     }
 
     @Override
+    public void renderIsland(DrawContext context, float posX, float posY, float width, float height, float progress) {
+        this.dynamicIsland.render(context, posX, posY);
+    }
+
+    @Override
     public void onDisable() {
         if (mc.player != null && this.lastSlot != -1) {
             mc.player.getInventory().setSelectedSlot(this.lastSlot);
         }
+        dynamicIsland.onDisable();
+    }
+
+    @Override
+    public float getIslandWidth() {
+        return this.dynamicIsland.getWidth();
+    }
+
+    @Override
+    public float getIslandHeight() {
+        return this.dynamicIsland.getHeight();
+    }
+
+    @Override
+    public int getIslandPriority() {
+        return 1;
     }
 
     public static class BlockData {
