@@ -38,6 +38,24 @@ public class ScaffoldPrediction extends Module {
 
     private final ScaffoldPredictionSettings settings = new ScaffoldPredictionSettings(this);
 
+    private static final double[] placeOffsets = new double[]{
+            0.03125,
+            0.09375,
+            0.15625,
+            0.21875,
+            0.28125,
+            0.34375,
+            0.40625,
+            0.46875,
+            0.53125,
+            0.59375,
+            0.65625,
+            0.71875,
+            0.78125,
+            0.84375,
+            0.90625,
+            0.96875
+    };
     private int stage;
     private boolean shouldKeepY;
     private int startY;
