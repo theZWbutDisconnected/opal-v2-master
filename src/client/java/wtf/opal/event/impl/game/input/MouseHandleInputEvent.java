@@ -1,4 +1,6 @@
 package wtf.opal.event.impl.game.input;
 
-public final class MouseHandleInputEvent {
+import wtf.opal.event.EventCancellable;
+
+public final class MouseHandleInputEvent extends EventCancellable {
 }

@@ -78,10 +78,12 @@ public abstract class MinecraftClientMixin {
 
     @Inject(
             method = "handleInputEvents",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingItem()Z", ordinal = 0)
-    )
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingItem()Z", ordinal = 0),
+            cancellable = true)
     private void handleInputEventsMouse(final CallbackInfo info) {
-        EventDispatcher.dispatch(new MouseHandleInputEvent());
+        MouseHandleInputEvent event = new MouseHandleInputEvent();
+        EventDispatcher.dispatch(event);
+        if (event.isCancelled()) info.cancel();
     }
 
     @Inject(

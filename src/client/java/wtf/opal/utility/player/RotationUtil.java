@@ -7,6 +7,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import wtf.opal.utility.misc.math.RandomUtility;
 
 public final class RotationUtil {
     
@@ -14,11 +15,11 @@ public final class RotationUtil {
     }
 
     public static float wrapAngleDiff(float angle, float target) {
-        return target + MathHelper.wrapAngleTo180_float(angle - target);
+        return target + MathHelper.wrapDegrees(angle - target);
     }
 
     public static float smoothAngle(float angle, float smoothFactor) {
-        return angle * (0.5f + 0.5f * (1.0f - Math.max(0.0f, Math.min(1.0f, smoothFactor + RandomUtil.nextFloat(-0.1f, 0.1f)))));
+        return angle * (0.5f + 0.5f * (1.0f - Math.max(0.0f, Math.min(1.0f, smoothFactor + RandomUtility.getRandomFloat(-0.1f, 0.1f)))));
     }
 
     public static float quantizeAngle(float angle) {

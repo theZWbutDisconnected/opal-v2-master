@@ -1,6 +1,8 @@
 package wtf.opal.client.feature.module.impl.world.scaffold.prediction;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
@@ -19,12 +21,20 @@ import wtf.opal.client.feature.module.Module;
 import wtf.opal.client.feature.module.ModuleCategory;
 import wtf.opal.client.feature.module.impl.movement.longjump.LongJumpModule;
 import wtf.opal.client.feature.module.impl.world.breaker.BreakerModule;
+import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldIsland;
 import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldModule;
 import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldSettings;
+import wtf.opal.client.renderer.world.WorldRenderer;
 import wtf.opal.event.impl.game.PreGameTickEvent;
+import wtf.opal.event.impl.game.input.MouseHandleInputEvent;
+import wtf.opal.event.impl.game.input.MoveInputEvent;
+import wtf.opal.event.impl.game.player.movement.PreMoveEvent;
+import wtf.opal.event.impl.render.RenderWorldEvent;
 import wtf.opal.event.subscriber.Subscribe;
 import wtf.opal.utility.misc.math.RandomUtility;
 import wtf.opal.utility.player.*;
+import wtf.opal.utility.render.ColorUtility;
+import wtf.opal.utility.render.CustomRenderLayers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +46,7 @@ import static wtf.opal.client.feature.module.impl.world.scaffold.prediction.Scaf
 public class ScaffoldPrediction extends Module {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
+    private final ScaffoldIsland dynamicIsland = new ScaffoldIsland(this);
     private final ScaffoldPredictionSettings settings = new ScaffoldPredictionSettings(this);
 
     private static final double[] placeOffsets = new double[]{
@@ -231,7 +242,7 @@ public class ScaffoldPrediction extends Module {
     }
 
     public ScaffoldPrediction() {
-        super("ScaffoldPrediction", "Port from OpenMYAU.", ModuleCategory.WORLD);
+        super("Scaffold Prediction", "Port from OpenMYAU.", ModuleCategory.WORLD);
     }
 
     public int getSlot() {
@@ -466,6 +477,55 @@ public class ScaffoldPrediction extends Module {
         }
     }
 
+    @Subscribe
+    public void onMoveInput(MoveInputEvent event) {
+        if (this.isEnabled()) {
+            if (mc.player.isOnGround() && this.stage > 0 && mc.options.forwardKey.isPressed()) {
+                mc.player.input.jump();
+            }
+            
+            float speed = this.getSpeed();
+            if (speed != 1.0F) {
+                if (event.getForward() != 0.0F && event.getSideways() != 0.0F) {
+                    event.setForward(event.getForward() * (1.0F / (float) Math.sqrt(2.0F)));
+                    event.setSideways(event.getSideways() * (1.0F / (float) Math.sqrt(2.0F)));
+                }
+                event.setForward(event.getForward() * speed);
+                event.setSideways(event.getSideways() * speed);
+            }
+        }
+    }
+
+    @Subscribe
+    public void onLivingUpdate(PreMoveEvent event) {
+        if (this.isEnabled()) {
+            if (this.shouldStopSprint()) {
+                mc.player.setSprinting(false);
+            }
+        }
+    }
+
+//    @Subscribe
+//    public void onLeftClick(MouseHandleInputEvent event) {
+//        if (this.isEnabled()) {
+//            event.setCancelled();
+//        }
+//    }
+
+    @Subscribe
+    public void onRenderWorld(final RenderWorldEvent event) {
+        if (mc.crosshairTarget instanceof BlockHitResult blockHitResult && !mc.world.getBlockState(blockHitResult.getBlockPos()).isAir()) {
+            final Vec3d startVec = new Vec3d(blockHitResult.getBlockPos().getX(), blockHitResult.getBlockPos().getY(), blockHitResult.getBlockPos().getZ());
+            final Vec3d dimensions = new Vec3d(1, 1, 1);
+
+            VertexConsumerProvider.Immediate vcp = VertexConsumerProvider.immediate(new BufferAllocator(1024));
+            WorldRenderer rc = new WorldRenderer(vcp);
+
+            rc.drawFilledCube(event.matrixStack(), CustomRenderLayers.getPositionColorQuads(true), startVec, dimensions, ColorUtility.applyOpacity(ColorUtility.getClientTheme().first, 0.25F));
+
+            vcp.draw();
+        }
+    }
 
     public ScaffoldPredictionSettings getSettings() {
         return settings;
