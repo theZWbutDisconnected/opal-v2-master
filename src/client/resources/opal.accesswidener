@@ -1,3 +1,4 @@
 accessWidener	v1	named
 
 accessible class net/minecraft/network/packet/c2s/play/PlayerInteractEntityC2SPacket$InteractTypeHandler
+accessible field net/minecraft/util/math/Direction VALUES [Lnet/minecraft/util/math/Direction;

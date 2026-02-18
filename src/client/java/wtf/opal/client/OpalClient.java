@@ -50,6 +50,7 @@ import wtf.opal.client.feature.module.impl.world.FastBreakModule;
 import wtf.opal.client.feature.module.impl.world.TimerModule;
 import wtf.opal.client.feature.module.impl.world.breaker.BreakerModule;
 import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldModule;
+import wtf.opal.client.feature.module.impl.world.scaffold.prediction.ScaffoldPrediction;
 import wtf.opal.client.feature.module.repository.ModuleRepository;
 import wtf.opal.client.notification.NotificationManager;
 import wtf.opal.event.EventDispatcher;
@@ -112,6 +113,7 @@ public final class OpalClient {
                     new PostProcessingModule(),
                     // World
                     new ScaffoldModule(),
+                    new ScaffoldPrediction(),
                     new TimerModule(),
                     new BreakerModule(),
                     new FastBreakModule(),
