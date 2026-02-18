@@ -25,7 +25,6 @@ import wtf.opal.event.impl.game.PreGameTickEvent;
 import wtf.opal.event.subscriber.Subscribe;
 import wtf.opal.utility.misc.math.RandomUtility;
 import wtf.opal.utility.player.*;
-import wtf.opal.utility.world.RaycastUtility;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -286,10 +285,10 @@ public class ScaffoldPrediction extends Module {
                     }
                 }
                 float currentYaw = this.getCurrentYaw();
-                float yawDiffTo180 = RotationUtil.wrapAngleDiff(currentYaw - 180.0F, event.getYaw());
+                float yawDiffTo180 = RotationUtil.wrapAngleDiff(currentYaw - 180.0F, mc.player.lastYaw);
                 float diagonalYaw = this.isDiagonal(currentYaw)
                         ? yawDiffTo180
-                        : RotationUtil.wrapAngleDiff(currentYaw - 135.0F * ((currentYaw + 180.0F) % 90.0F < 45.0F ? 1.0F : -1.0F), event.getYaw());
+                        : RotationUtil.wrapAngleDiff(currentYaw - 135.0F * ((currentYaw + 180.0F) % 90.0F < 45.0F ? 1.0F : -1.0F), mc.player.lastYaw);
                 if (!this.canRotate) {
                     switch (this.settings.getRotationMode()) {
                         case DEFAULT:
@@ -349,9 +348,9 @@ public class ScaffoldPrediction extends Module {
                         for (double dy : y) {
                             for (double dz : z) {
                                 double relX = (double) blockData.blockPos().getX() + dx - mc.player.getX();
-                                double relY = (double) blockData.blockPos().getY() + dy - mc.player.getY() - (double) mc.player.getEyeHeight();
+                                double relY = (double) blockData.blockPos().getY() + dy - mc.player.getY() - (double) mc.player.getEyeHeight(EntityPose.STANDING);
                                 double relZ = (double) blockData.blockPos().getZ() + dz - mc.player.getZ();
-                                float baseYaw = RotationUtil.wrapAngleDiff(this.yaw, event.getYaw());
+                                float baseYaw = RotationUtil.wrapAngleDiff(this.yaw, mc.player.lastYaw);
                                 float[] rotations = RotationUtil.getRotationsTo(relX, relY, relZ, baseYaw, this.pitch);
                                 HitResult mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.player.getBlockInteractionRange(), 1.0F);
                                 if (mop != null
@@ -377,10 +376,10 @@ public class ScaffoldPrediction extends Module {
                 }
                 if (this.canRotate && mc.options.forwardKey.isPressed() && Math.abs(MathHelper.wrapDegrees(yawDiffTo180 - this.yaw)) < 90.0F) {
                     switch (this.settings.getRotationMode()) {
-                        case 2:
+                        case RotationMode.BACKWARDS:
                             this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
                             break;
-                        case 3:
+                        case RotationMode.SIDEWAYS:
                             this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
                     }
                 }
@@ -388,29 +387,27 @@ public class ScaffoldPrediction extends Module {
                     float targetYaw = this.yaw;
                     float targetPitch = this.pitch;
                     if (this.towering && (mc.player.getVelocity().getY() > 0.0 || mc.player.getEntityPos().getY() > (double) (this.startY + 1))) {
-                        float yawDiff = MathHelper.wrapDegrees(this.yaw - event.getYaw());
-                        float tolerance = (this.rotationTick >= 2 ? RandomUtility.getRandomFloat(90.0F, 95.0F) : RandomUtility.getRandomFloat(30.0F, 35.0F)) * (this.rotationSpeed.getValue() / 100.0f);
+                        float yawDiff = MathHelper.wrapDegrees(this.yaw - mc.player.lastYaw);
+                        float tolerance = (this.rotationTick >= 2 ? RandomUtility.getRandomFloat(90.0F, 95.0F) : RandomUtility.getRandomFloat(30.0F, 35.0F)) * (this.getSettings().getRotationSpeed());
                         if (Math.abs(yawDiff) > tolerance) {
                             float clampedYaw = RotationUtil.clampAngle(yawDiff, tolerance);
-                            targetYaw = RotationUtil.quantizeAngle(event.getYaw() + clampedYaw);
+                            targetYaw = RotationUtil.quantizeAngle(mc.player.lastYaw + clampedYaw);
                             this.rotationTick = Math.max(this.rotationTick, 1);
                         }
                     }
                     if (this.isTowering()) {
-                        float yawDelta = MathHelper.wrapDegrees(mc.player.getYaw() - event.getYaw());
-                        targetYaw = RotationUtil.quantizeAngle(event.getYaw() + yawDelta * RandomUtility.getRandomFloat(0.98F, 0.99F));
+                        float yawDelta = MathHelper.wrapDegrees(mc.player.getYaw() - mc.player.lastYaw);
+                        targetYaw = RotationUtil.quantizeAngle(mc.player.lastYaw + yawDelta * RandomUtility.getRandomFloat(0.98F, 0.99F));
                         targetPitch = RotationUtil.quantizeAngle(RandomUtility.getRandomFloat(30.0F, 80.0F));
                         this.rotationTick = 3;
                         this.towering = true;
                     }
-                    event.setRotation(targetYaw, targetPitch, 3);
-                    if (this.moveFix.getValue() == 1) {
-                        event.setPervRotation(targetYaw, 3);
-                    }
+                    mc.player.setYaw(targetYaw);
+                    mc.player.setPitch(targetPitch);
                 }
                 if (blockData != null && hitVec != null && this.rotationTick <= 0) {
                     this.place(blockData.blockPos(), blockData.facing(), hitVec);
-                    if (this.multiplace.getValue()) {
+                    if (this.settings.isMultiplace()) {
                         for (int i = 0; i < 3; i++) {
                             blockData = this.getBlockData();
                             if (blockData == null) {
@@ -427,7 +424,7 @@ public class ScaffoldPrediction extends Module {
                                 double dx = hitVec.getX() - mc.player.getX();
                                 double dy = hitVec.getY() - mc.player.getY() - (double) mc.player.getEyeHeight(EntityPose.STANDING);
                                 double dz = hitVec.getZ() - mc.player.getZ();
-                                float[] rotations = RotationUtil.getRotationsTo(dx, dy, dz, event.getYaw(), event.getPitch());
+                                float[] rotations = RotationUtil.getRotationsTo(dx, dy, dz, mc.player.lastYaw, mc.player.lastPitch);
                                 if (!(Math.abs(rotations[0] - this.yaw) < 120.0F) || !(Math.abs(rotations[1] - this.pitch) < 60.0F)) {
                                     break;
                                 }
