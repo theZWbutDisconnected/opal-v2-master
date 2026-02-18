@@ -43,7 +43,7 @@ public final class ScaffoldPredictionSettings {
         this.itemSpoof = new BooleanProperty("Item spoof", false);
         this.blockCounter = new BooleanProperty("Block counter", true);
 
-        module.addProperties(rotationMode, rotationSpeed, sprintMode, groundMotion, airMotion, speedMotion, 
+        module.addProperties(rotationProperty.get(), rotationMode, rotationSpeed, sprintMode, groundMotion, airMotion, speedMotion,
                            tower, keepY, keepYonPress, disableWhileJumpActive, multiplace, safeWalk, 
                            swing, itemSpoof, blockCounter);
     }

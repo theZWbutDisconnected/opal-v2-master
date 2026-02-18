@@ -335,9 +335,7 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                 }
                 BlockData blockData = this.getBlockData();
                 Vec3d hitVec = null;
-                System.out.println("pre");
                 if (blockData != null) {
-                    System.out.println(blockData);
                     double[] x = placeOffsets;
                     double[] y = placeOffsets;
                     double[] z = placeOffsets;
