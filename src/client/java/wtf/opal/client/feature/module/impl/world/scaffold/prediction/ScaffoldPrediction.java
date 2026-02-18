@@ -254,49 +254,51 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
 
     @Subscribe(priority = 1)
     public void onPreGameTick(final PreGameTickEvent event) {
-        if (this.rotationTick > 0) {
-            this.rotationTick--;
-        }
-        if (mc.player.isOnGround()) {
-            if (this.stage > 0) {
-                this.stage--;
+        if (this.isEnabled()) {
+            if (this.rotationTick > 0) {
+                this.rotationTick--;
             }
-            if (this.stage < 0) {
-                this.stage++;
-            }
-            if (this.stage == 0
-                    && this.getSettings().getKeepYMode() != KeepYMode.NONE
-                    && (!this.getSettings().isKeepYonPress() || mc.player.isUsingItem())
-                    && (!this.getSettings().isDisableWhileJumpActive() || !mc.player.hasStatusEffect(StatusEffects.JUMP_BOOST))
-                    && !mc.options.jumpKey.isPressed()) {
-                this.stage = 1;
-            }
-            this.startY = this.shouldKeepY ? this.startY : MathHelper.floor(mc.player.getY());
-            this.shouldKeepY = false;
-            this.towering = false;
-        }
-        if (this.canPlace()) {
-            var mainHand = mc.player.getMainHandStack();
-            var offHand = mc.player.getOffHandStack();
-            int count = 0;
-            if (mainHand.getItem() instanceof BlockItem) {
-                count = mainHand.getCount();
-            } else if (offHand.getItem() instanceof BlockItem) {
-                count = offHand.getCount();
-            }
-            this.blockCount = Math.min(this.blockCount, count);
-            if (this.blockCount <= 0) {
-                int currentSlot = mc.player.getInventory().getSelectedSlot();
-                if (this.blockCount == 0) {
-                    currentSlot--;
+            if (mc.player.isOnGround()) {
+                if (this.stage > 0) {
+                    this.stage--;
                 }
-                for (int i = currentSlot; i > currentSlot - 9; i--) {
-                    int hotbarSlot = (i % 9 + 9) % 9;
-                    var candidate = mc.player.getInventory().getStack(hotbarSlot);
-                    if (candidate.getItem() instanceof BlockItem) {
-                        mc.player.getInventory().setSelectedSlot(hotbarSlot);
-                        this.blockCount = candidate.getCount();
-                        break;
+                if (this.stage < 0) {
+                    this.stage++;
+                }
+                if (this.stage == 0
+                        && this.getSettings().getKeepYMode() != KeepYMode.NONE
+                        && (!this.getSettings().isKeepYonPress() || mc.player.isUsingItem())
+                        && (!this.getSettings().isDisableWhileJumpActive() || !mc.player.hasStatusEffect(StatusEffects.JUMP_BOOST))
+                        && !mc.options.jumpKey.isPressed()) {
+                    this.stage = 1;
+                }
+                this.startY = this.shouldKeepY ? this.startY : MathHelper.floor(mc.player.getY());
+                this.shouldKeepY = false;
+                this.towering = false;
+            }
+            if (this.canPlace()) {
+                var mainHand = mc.player.getMainHandStack();
+                var offHand = mc.player.getOffHandStack();
+                int count = 0;
+                if (mainHand.getItem() instanceof BlockItem) {
+                    count = mainHand.getCount();
+                } else if (offHand.getItem() instanceof BlockItem) {
+                    count = offHand.getCount();
+                }
+                this.blockCount = Math.min(this.blockCount, count);
+                if (this.blockCount <= 0) {
+                    int currentSlot = mc.player.getInventory().getSelectedSlot();
+                    if (this.blockCount == 0) {
+                        currentSlot--;
+                    }
+                    for (int i = currentSlot; i > currentSlot - 9; i--) {
+                        int hotbarSlot = (i % 9 + 9) % 9;
+                        var candidate = mc.player.getInventory().getStack(hotbarSlot);
+                        if (candidate.getItem() instanceof BlockItem) {
+                            mc.player.getInventory().setSelectedSlot(hotbarSlot);
+                            this.blockCount = candidate.getCount();
+                            break;
+                        }
                     }
                 }
                 float currentYaw = this.getCurrentYaw();
