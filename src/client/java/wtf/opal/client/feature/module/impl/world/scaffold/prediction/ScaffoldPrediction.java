@@ -11,13 +11,13 @@ import net.minecraft.potion.Potion;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import wtf.opal.client.OpalClient;
+import wtf.opal.client.feature.helper.impl.player.rotation.RotationHelper;
+import wtf.opal.client.feature.helper.impl.player.rotation.handler.RotationMouseHandler;
+import wtf.opal.client.feature.helper.impl.player.rotation.model.impl.InstantRotationModel;
 import wtf.opal.client.feature.module.Module;
 import wtf.opal.client.feature.module.ModuleCategory;
 import wtf.opal.client.feature.module.impl.movement.longjump.LongJumpModule;
@@ -416,8 +416,8 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                         this.rotationTick = 3;
                         this.towering = true;
                     }
-                    mc.player.setYaw(targetYaw);
-                    mc.player.setPitch(targetPitch);
+                    RotationMouseHandler handler = RotationHelper.getHandler();
+                    handler.rotate(new Vec2f(targetYaw, targetPitch), InstantRotationModel.INSTANCE);
                 }
                 if (blockData != null && hitVec != null && this.rotationTick <= 0) {
                     this.place(blockData.blockPos(), blockData.facing(), hitVec);
