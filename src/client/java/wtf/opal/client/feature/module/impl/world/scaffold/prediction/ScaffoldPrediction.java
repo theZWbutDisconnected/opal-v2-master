@@ -238,7 +238,8 @@ public class ScaffoldPrediction extends Module {
         return this.lastSlot;
     }
 
-    public void onPreGameTick(PreGameTickEvent event) {
+    @Subscribe
+    public void onUpdate(PreGameTickEvent event) {
         if (this.rotationTick > 0) {
             this.rotationTick--;
         }
