@@ -1,6 +1,7 @@
 package wtf.opal.client.feature.module.impl.world.scaffold.prediction;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.EntityPose;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
@@ -23,11 +24,7 @@ import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldSettings;
 import wtf.opal.event.impl.game.PreGameTickEvent;
 import wtf.opal.event.subscriber.Subscribe;
 import wtf.opal.utility.misc.math.RandomUtility;
-import wtf.opal.utility.player.InventoryUtility;
-import wtf.opal.utility.player.MoveUtility;
-import wtf.opal.utility.player.PlayerUtility;
-import wtf.opal.utility.player.RotationUtil;
-import wtf.opal.utility.player.RotationUtility;
+import wtf.opal.utility.player.*;
 import wtf.opal.utility.world.RaycastUtility;
 
 import java.util.ArrayList;
@@ -428,7 +425,7 @@ public class ScaffoldPrediction extends Module {
                             } else {
                                 hitVec = BlockUtil.getClickVec(blockData.blockPos(), blockData.facing());
                                 double dx = hitVec.getX() - mc.player.getX();
-                                double dy = hitVec.getY() - mc.player.getY() - (double) mc.player.getEyeHeight();
+                                double dy = hitVec.getY() - mc.player.getY() - (double) mc.player.getEyeHeight(EntityPose.STANDING);
                                 double dz = hitVec.getZ() - mc.player.getZ();
                                 float[] rotations = RotationUtil.getRotationsTo(dx, dy, dz, event.getYaw(), event.getPitch());
                                 if (!(Math.abs(rotations[0] - this.yaw) < 120.0F) || !(Math.abs(rotations[1] - this.pitch) < 60.0F)) {
@@ -448,16 +445,16 @@ public class ScaffoldPrediction extends Module {
                 }
                 if (this.targetFacing != null) {
                     if (this.rotationTick <= 0) {
-                        int playerBlockX = MathHelper.floor_double(mc.player.getX());
-                        int playerBlockY = MathHelper.floor_double(mc.player.getY());
-                        int playerBlockZ = MathHelper.floor_double(mc.player.getZ());
+                        int playerBlockX = MathHelper.floor(mc.player.getX());
+                        int playerBlockY = MathHelper.floor(mc.player.getY());
+                        int playerBlockZ = MathHelper.floor(mc.player.getZ());
                         BlockPos belowPlayer = new BlockPos(playerBlockX, playerBlockY - 1, playerBlockZ);
                         hitVec = BlockUtil.getHitVec(belowPlayer, this.targetFacing, this.yaw, this.pitch);
                         this.place(belowPlayer, this.targetFacing, hitVec);
                     }
                     this.targetFacing = null;
-                } else if (this.getSettings().getKeepYMode() == KeepYMode.TELLY && this.stage > 0 && !mc.player.onGround) {
-                    int nextBlockY = MathHelper.floor_double(mc.player.getY() + mc.player.motionY);
+                } else if (this.getSettings().getKeepYMode() == KeepYMode.EXTRA && this.stage > 0 && !mc.player.isOnGround()) {
+                    int nextBlockY = MathHelper.floor(mc.player.getY() + mc.player.getVelocity().getY());
                     if (nextBlockY <= this.startY && mc.player.getY() > (double) (this.startY + 1)) {
                         this.shouldKeepY = true;
                         blockData = this.getBlockData();
