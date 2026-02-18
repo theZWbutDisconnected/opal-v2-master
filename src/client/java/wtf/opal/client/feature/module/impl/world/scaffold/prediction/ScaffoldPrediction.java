@@ -14,6 +14,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
+import org.slf4j.LoggerFactory;
 import wtf.opal.client.OpalClient;
 import wtf.opal.client.feature.helper.impl.player.rotation.RotationHelper;
 import wtf.opal.client.feature.helper.impl.player.rotation.handler.RotationMouseHandler;
@@ -251,8 +252,8 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
         return this.lastSlot;
     }
 
-    @Subscribe
-    public void onUpdate(PreGameTickEvent event) {
+    @Subscribe(priority = 1)
+    public void onPreGameTick(final PreGameTickEvent event) {
         if (this.rotationTick > 0) {
             this.rotationTick--;
         }
@@ -332,7 +333,9 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                 }
                 BlockData blockData = this.getBlockData();
                 Vec3d hitVec = null;
+                System.out.println("pre");
                 if (blockData != null) {
+                    System.out.println(blockData);
                     double[] x = placeOffsets;
                     double[] y = placeOffsets;
                     double[] z = placeOffsets;
@@ -417,7 +420,7 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                         this.towering = true;
                     }
                     RotationMouseHandler handler = RotationHelper.getHandler();
-                    handler.rotate(new Vec2f(targetYaw, targetPitch), InstantRotationModel.INSTANCE);
+                    handler.rotate(new Vec2f(targetYaw, targetPitch), settings.createRotationModel());
                 }
                 if (blockData != null && hitVec != null && this.rotationTick <= 0) {
                     this.place(blockData.blockPos(), blockData.facing(), hitVec);

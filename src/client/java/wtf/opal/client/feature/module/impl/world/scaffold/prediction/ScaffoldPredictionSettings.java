@@ -1,11 +1,14 @@
 package wtf.opal.client.feature.module.impl.world.scaffold.prediction;
 
 import wtf.opal.client.feature.helper.impl.player.rotation.RotationProperty;
+import wtf.opal.client.feature.helper.impl.player.rotation.model.IRotationModel;
+import wtf.opal.client.feature.helper.impl.player.rotation.model.impl.InstantRotationModel;
 import wtf.opal.client.feature.module.property.impl.bool.BooleanProperty;
 import wtf.opal.client.feature.module.property.impl.mode.ModeProperty;
 import wtf.opal.client.feature.module.property.impl.number.NumberProperty;
 
 public final class ScaffoldPredictionSettings {
+    private final RotationProperty rotationProperty;
     private final ModeProperty<RotationMode> rotationMode;
     private final NumberProperty rotationSpeed;
     private final ModeProperty<SprintMode> sprintMode;
@@ -23,6 +26,7 @@ public final class ScaffoldPredictionSettings {
     private final BooleanProperty blockCounter;
 
     public ScaffoldPredictionSettings(final ScaffoldPrediction module) {
+        this.rotationProperty = new RotationProperty(InstantRotationModel.INSTANCE);
         this.rotationMode = new ModeProperty<>("Rotations", RotationMode.DEFAULT);
         this.rotationSpeed = new NumberProperty("Rotation speed", 1.0d, 0.0d, 2.0d, 0.1d);
         this.sprintMode = new ModeProperty<>("Sprint", SprintMode.VANILLA);
@@ -102,6 +106,10 @@ public final class ScaffoldPredictionSettings {
 
     public boolean isBlockCounter() {
         return blockCounter.getValue();
+    }
+
+    public IRotationModel createRotationModel() {
+        return rotationProperty.createModel();
     }
 
     public enum RotationMode {
