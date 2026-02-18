@@ -145,5 +145,4 @@ public final class MoveUtility {
         }
         return (mc.player.forwardSpeed != 0F || mc.player.sidewaysSpeed != 0F);
     }
-
 }
