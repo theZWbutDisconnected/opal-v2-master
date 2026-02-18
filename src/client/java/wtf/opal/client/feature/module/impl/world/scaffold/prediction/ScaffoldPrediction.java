@@ -416,7 +416,7 @@ public class ScaffoldPrediction extends Module {
                             if (blockData == null) {
                                 break;
                             }
-                            HitResult mop = RotationUtil.rayTrace(this.yaw, this.pitch, mc.playerController.getBlockReachDistance(), 1.0F);
+                            HitResult mop = RotationUtil.rayTrace(this.yaw, this.pitch, mc.player.getBlockInteractionRange(), 1.0F);
                             if (mop != null
                                     && mop.getType() == HitResult.Type.BLOCK
                                     && mop.getPos().equals(blockData.blockPos())
@@ -431,7 +431,7 @@ public class ScaffoldPrediction extends Module {
                                 if (!(Math.abs(rotations[0] - this.yaw) < 120.0F) || !(Math.abs(rotations[1] - this.pitch) < 60.0F)) {
                                     break;
                                 }
-                                mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.playerController.getBlockReachDistance(), 1.0F);
+                                mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.player.getBlockInteractionRange(), 1.0F);
                                 if (mop == null
                                         || mop.getType() != HitResult.Type.BLOCK
                                         || !mop.getPos().equals(blockData.blockPos())
