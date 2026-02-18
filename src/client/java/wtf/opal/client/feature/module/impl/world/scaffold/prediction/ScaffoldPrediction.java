@@ -289,8 +289,8 @@ public class ScaffoldPrediction extends Module {
                         ? yawDiffTo180
                         : RotationUtil.wrapAngleDiff(currentYaw - 135.0F * ((currentYaw + 180.0F) % 90.0F < 45.0F ? 1.0F : -1.0F), event.getYaw());
                 if (!this.canRotate) {
-                    switch (this.rotationMode.getValue()) {
-                        case 1:
+                    switch (this.settings.getRotationMode()) {
+                        case DEFAULT:
                             if (this.yaw == -180.0F && this.pitch == 0.0F) {
                                 this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
                                 this.pitch = RotationUtil.quantizeAngle(85.0F);
@@ -298,7 +298,7 @@ public class ScaffoldPrediction extends Module {
                                 this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
                             }
                             break;
-                        case 2:
+                        case BACKWARDS:
                             if (this.yaw == -180.0F && this.pitch == 0.0F) {
                                 this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
                                 this.pitch = RotationUtil.quantizeAngle(85.0F);
@@ -306,7 +306,7 @@ public class ScaffoldPrediction extends Module {
                                 this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
                             }
                             break;
-                        case 3:
+                        case SIDEWAYS:
                             if (this.yaw == -180.0F && this.pitch == 0.0F) {
                                 this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
                                 this.pitch = RotationUtil.quantizeAngle(85.0F);
@@ -316,7 +316,7 @@ public class ScaffoldPrediction extends Module {
                     }
                 }
                 BlockData blockData = this.getBlockData();
-                Vec3 hitVec = null;
+                Vec3d hitVec = null;
                 if (blockData != null) {
                     double[] x = placeOffsets;
                     double[] y = placeOffsets;
@@ -374,7 +374,7 @@ public class ScaffoldPrediction extends Module {
                     }
                 }
                 if (this.canRotate && MoveUtil.isForwardPressed() && Math.abs(MathHelper.wrapAngleTo180_float(yawDiffTo180 - this.yaw)) < 90.0F) {
-                    switch (this.rotationMode.getValue()) {
+                    switch (this.settings.getRotationMode()) {
                         case 2:
                             this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
                             break;
@@ -382,7 +382,7 @@ public class ScaffoldPrediction extends Module {
                             this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
                     }
                 }
-                if (this.rotationMode.getValue() != 0) {
+                if (this.settings.getRotationMode() != ScaffoldPredictionSettings.RotationMode.NONE) {
                     float targetYaw = this.yaw;
                     float targetPitch = this.pitch;
                     if (this.towering && (mc.thePlayer.motionY > 0.0 || mc.thePlayer.posY > (double) (this.startY + 1))) {
