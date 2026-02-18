@@ -351,9 +351,9 @@ public class ScaffoldPrediction extends Module {
                     for (double dx : x) {
                         for (double dy : y) {
                             for (double dz : z) {
-                                double relX = (double) blockData.blockPos().getX() + dx - mc.player.posX;
-                                double relY = (double) blockData.blockPos().getY() + dy - mc.player.posY - (double) mc.player.getEyeHeight();
-                                double relZ = (double) blockData.blockPos().getZ() + dz - mc.player.posZ;
+                                double relX = (double) blockData.blockPos().getX() + dx - mc.player.getX();
+                                double relY = (double) blockData.blockPos().getY() + dy - mc.player.getY() - (double) mc.player.getEyeHeight();
+                                double relZ = (double) blockData.blockPos().getZ() + dz - mc.player.getZ();
                                 float baseYaw = RotationUtil.wrapAngleDiff(this.yaw, event.getYaw());
                                 float[] rotations = RotationUtil.getRotationsTo(relX, relY, relZ, baseYaw, this.pitch);
                                 HitResult mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.player.getBlockInteractionRange(), 1.0F);
@@ -366,7 +366,7 @@ public class ScaffoldPrediction extends Module {
                                         bestYaw = rotations[0];
                                         bestPitch = rotations[1];
                                         bestDiff = totalDiff;
-                                        hitVec = mop.hitVec;
+                                        hitVec = mop.getPos();
                                     }
                                 }
                             }
@@ -424,12 +424,12 @@ public class ScaffoldPrediction extends Module {
                                     && mop.getType() == HitResult.Type.BLOCK
                                     && mop.getPos().equals(blockData.blockPos())
                                     && ((BlockHitResult) mop).getSide() == blockData.facing()) {
-                                this.place(blockData.blockPos(), blockData.facing(), mop.hitVec);
+                                this.place(blockData.blockPos(), blockData.facing(), mop.getPos());
                             } else {
                                 hitVec = BlockUtil.getClickVec(blockData.blockPos(), blockData.facing());
-                                double dx = hitVec.xCoord - mc.player.posX;
-                                double dy = hitVec.yCoord - mc.player.posY - (double) mc.player.getEyeHeight();
-                                double dz = hitVec.zCoord - mc.player.posZ;
+                                double dx = hitVec.getX() - mc.player.getX();
+                                double dy = hitVec.getY() - mc.player.getY() - (double) mc.player.getEyeHeight();
+                                double dz = hitVec.getZ() - mc.player.getZ();
                                 float[] rotations = RotationUtil.getRotationsTo(dx, dy, dz, event.getYaw(), event.getPitch());
                                 if (!(Math.abs(rotations[0] - this.yaw) < 120.0F) || !(Math.abs(rotations[1] - this.pitch) < 60.0F)) {
                                     break;
@@ -441,24 +441,24 @@ public class ScaffoldPrediction extends Module {
                                         || ((BlockHitResult) mop).getSide() != blockData.facing()) {
                                     break;
                                 }
-                                this.place(blockData.blockPos(), blockData.facing(), mop.hitVec);
+                                this.place(blockData.blockPos(), blockData.facing(), mop.getPos());
                             }
                         }
                     }
                 }
                 if (this.targetFacing != null) {
                     if (this.rotationTick <= 0) {
-                        int playerBlockX = MathHelper.floor_double(mc.player.posX);
-                        int playerBlockY = MathHelper.floor_double(mc.player.posY);
-                        int playerBlockZ = MathHelper.floor_double(mc.player.posZ);
+                        int playerBlockX = MathHelper.floor_double(mc.player.getX());
+                        int playerBlockY = MathHelper.floor_double(mc.player.getY());
+                        int playerBlockZ = MathHelper.floor_double(mc.player.getZ());
                         BlockPos belowPlayer = new BlockPos(playerBlockX, playerBlockY - 1, playerBlockZ);
                         hitVec = BlockUtil.getHitVec(belowPlayer, this.targetFacing, this.yaw, this.pitch);
                         this.place(belowPlayer, this.targetFacing, hitVec);
                     }
                     this.targetFacing = null;
-                } else if (this.keepY.getValue() == 2 && this.stage > 0 && !mc.player.onGround) {
-                    int nextBlockY = MathHelper.floor_double(mc.player.posY + mc.player.motionY);
-                    if (nextBlockY <= this.startY && mc.player.posY > (double) (this.startY + 1)) {
+                } else if (this.getSettings().getKeepYMode() == KeepYMode.TELLY && this.stage > 0 && !mc.player.onGround) {
+                    int nextBlockY = MathHelper.floor_double(mc.player.getY() + mc.player.motionY);
+                    if (nextBlockY <= this.startY && mc.player.getY() > (double) (this.startY + 1)) {
                         this.shouldKeepY = true;
                         blockData = this.getBlockData();
                         if (blockData != null && this.rotationTick <= 0) {
