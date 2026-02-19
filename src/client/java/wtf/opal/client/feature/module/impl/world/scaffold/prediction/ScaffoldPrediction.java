@@ -27,6 +27,10 @@ import wtf.opal.client.feature.module.impl.world.breaker.BreakerModule;
 import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldIsland;
 import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldModule;
 import wtf.opal.client.feature.module.impl.world.scaffold.ScaffoldSettings;
+import wtf.opal.client.feature.module.impl.world.scaffold.prediction.ScaffoldPredictionSettings.KeepYMode;
+import wtf.opal.client.feature.module.impl.world.scaffold.prediction.ScaffoldPredictionSettings.RotationMode;
+import wtf.opal.client.feature.module.impl.world.scaffold.prediction.ScaffoldPredictionSettings.SprintMode;
+import wtf.opal.client.feature.module.impl.world.scaffold.prediction.ScaffoldPredictionSettings.TowerMode;
 import wtf.opal.client.renderer.world.WorldRenderer;
 import wtf.opal.event.impl.game.PreGameTickEvent;
 import wtf.opal.event.impl.game.input.MouseHandleInputEvent;
@@ -70,18 +74,18 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
             0.90625,
             0.96875
     };
-    private int stage;
-    private boolean shouldKeepY;
-    private int startY;
-    private int lastSlot;
-    private int blockCount;
-    private int rotationTick;
-    private float yaw;
-    private float pitch;
-    private boolean canRotate;
-    private int towerTick;
-    private int towerDelay;
-    private boolean towering;
+    private int rotationTick = 0;
+    private int lastSlot = -1;
+    private int blockCount = -1;
+    private float yaw = -180.0F;
+    private float pitch = 0.0F;
+    private boolean canRotate = false;
+    private int towerTick = 0;
+    private int towerDelay = 0;
+    private int stage = 0;
+    private int startY = 256;
+    private boolean shouldKeepY = false;
+    private boolean towering = false;
     private Direction targetFacing = null;
 
     private boolean shouldStopSprint() {
@@ -174,7 +178,7 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
         final boolean isBlock = mc.player.getMainHandStack().getItem() instanceof BlockItem;
         if (isBlock && this.blockCount > 0) {
             BlockHitResult hitResult = new BlockHitResult(vec3, enumFacing, blockPos, false);
-            if (mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult).isAccepted()) {
+            if (mc.interactionManager.interactBlock(mc.player, mc.player.getActiveHand(), hitResult).isAccepted()) {
                 if (!mc.player.isInCreativeMode()) {
                     this.blockCount--;
                 }
@@ -226,7 +230,9 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
     }
 
     private float getCurrentYaw() {
-        return (float) MoveUtility.getDirection(mc.player.getYaw(), mc.player.forwardSpeed, mc.player.sidewaysSpeed);
+        return MoveUtility.adjustYaw(
+                mc.player.getYaw(), mc.player.forwardSpeed, mc.player.sidewaysSpeed
+        );
     }
 
     private boolean isDiagonal(float yaw) {
@@ -372,7 +378,7 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                                 HitResult mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.player.getBlockInteractionRange(), 1.0F);
                                 if (mop != null
                                         && mop.getType() == HitResult.Type.BLOCK
-                                        && mop.getPos() == blockData.blockPos().toCenterPos()
+                                        && mop.getPos().equals(blockData.blockPos().toCenterPos())
                                         && ((BlockHitResult) mop).getSide() == blockData.facing()) {
                                     float totalDiff = Math.abs(rotations[0] - baseYaw) + Math.abs(rotations[1] - this.pitch);
                                     if (bestYaw == -180.0F && bestPitch == 0.0F || totalDiff < bestDiff) {
@@ -405,7 +411,7 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                     float targetPitch = this.pitch;
                     if (this.towering && (mc.player.getVelocity().getY() > 0.0 || mc.player.getEntityPos().getY() > (double) (this.startY + 1))) {
                         float yawDiff = MathHelper.wrapDegrees(this.yaw - mc.player.lastYaw);
-                        float tolerance = (this.rotationTick >= 2 ? RandomUtility.getRandomFloat(90.0F, 95.0F) : RandomUtility.getRandomFloat(30.0F, 35.0F)) * (this.getSettings().getRotationSpeed());
+                        float tolerance = (this.rotationTick >= 2 ? RandomUtility.getRandomFloat(90.0F, 95.0F) : RandomUtility.getRandomFloat(30.0F, 35.0F)) * (float) this.getSettings().getRotationSpeed();
                         if (Math.abs(yawDiff) > tolerance) {
                             float clampedYaw = RotationUtil.clampAngle(yawDiff, tolerance);
                             targetYaw = RotationUtil.quantizeAngle(mc.player.lastYaw + clampedYaw);
@@ -486,18 +492,18 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
     public void onMoveInput(MoveInputEvent event) {
         if (this.isEnabled()) {
             if (mc.player.isOnGround() && this.stage > 0 && mc.options.forwardKey.isPressed()) {
-                mc.player.input.jump();
+                mc.player.jump();
             }
             
-            float speed = this.getSpeed();
-            if (speed != 1.0F) {
-                if (event.getForward() != 0.0F && event.getSideways() != 0.0F) {
-                    event.setForward(event.getForward() * (1.0F / (float) Math.sqrt(2.0F)));
-                    event.setSideways(event.getSideways() * (1.0F / (float) Math.sqrt(2.0F)));
-                }
-                event.setForward(event.getForward() * speed);
-                event.setSideways(event.getSideways() * speed);
-            }
+//            float speed = this.getSpeed();
+//            if (speed != 1.0F) {
+//                if (event.getForward() != 0.0F && event.getSideways() != 0.0F) {
+//                    event.setForward(event.getForward() * (1.0F / (float) Math.sqrt(2.0F)));
+//                    event.setSideways(event.getSideways() * (1.0F / (float) Math.sqrt(2.0F)));
+//                }
+//                event.setForward(event.getForward() * speed);
+//                event.setSideways(event.getSideways() * speed);
+//            }
         }
     }
 

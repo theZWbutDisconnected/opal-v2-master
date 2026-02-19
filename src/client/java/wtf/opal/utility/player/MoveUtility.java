@@ -145,4 +145,21 @@ public final class MoveUtility {
         }
         return (mc.player.forwardSpeed != 0F || mc.player.sidewaysSpeed != 0F);
     }
+
+    public static float adjustYaw(float yaw, float forward, float strafe) {
+        TargetStrafeModule targetStrafe = OpalClient.getInstance().getModuleRepository().getModule(TargetStrafeModule.class);
+        if (targetStrafe.isEnabled()) {
+            if (!Float.isNaN(targetStrafe.getYaw())) {
+                return targetStrafe.getYaw();
+            }
+        }
+        if (forward < 0.0f) {
+            yaw += 180.0f;
+        }
+        if (strafe != 0.0f) {
+            float multiplier = forward == 0.0f ? 1.0f : 0.5f * Math.signum(forward);
+            yaw += -90.0f * multiplier * Math.signum(strafe);
+        }
+        return MathHelper.wrapDegrees(yaw);
+    }
 }
