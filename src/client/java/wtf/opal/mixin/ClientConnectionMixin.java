@@ -93,6 +93,7 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
     )
     private void hookSendPacket(Packet<?> packet, @Nullable ChannelFutureListener channelFutureListener, CallbackInfo ci) {
         if (packet instanceof EnterReconfigurationS2CPacket) {
+            ci.cancel();
             LOGGER.debug("发送EnterReconfigurationS2CPacket（带监听器）");
             return;
         }
