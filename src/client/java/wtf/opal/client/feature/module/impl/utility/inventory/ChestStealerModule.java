@@ -1,6 +1,7 @@
 package wtf.opal.client.feature.module.impl.utility.inventory;
 
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.EquippableComponent;
 import net.minecraft.enchantment.Enchantments;
@@ -65,7 +66,7 @@ ChestStealerModule extends Module {
             if (stack.isEmpty()) continue;
 
             if (canMove() && (shouldTake(stack, bestChestArmor, bestChestSword, bestChestPickaxe, bestChestAxe) || !smart.getValue())) {
-                InventoryUtility.shiftClick(screenHandler, i, 0);
+                InventoryUtility.shiftClick(container, i, 0);
                 stopwatch.reset();
                 tookItem = true;
                 break;

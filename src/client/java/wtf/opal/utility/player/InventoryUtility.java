@@ -1,6 +1,10 @@
 package wtf.opal.utility.player;
 
 import net.minecraft.block.*;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.input.MouseInput;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ToolComponent;
 import net.minecraft.enchantment.Enchantment;
@@ -14,7 +18,10 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.EmptyBlockView;
+import org.lwjgl.glfw.GLFW;
+import wtf.opal.mixin.HandledScreenAccessor;
 
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
@@ -24,7 +31,7 @@ import java.util.stream.IntStream;
 import static wtf.opal.client.Constants.mc;
 
 public final class InventoryUtility {
-
+    
     private InventoryUtility() {
     }
 
@@ -33,6 +40,16 @@ public final class InventoryUtility {
                 .filter(i -> {
                     final ItemStack itemStack = mc.player.getInventory().getMainStacks().get(i);
                     return itemStack.getItem() == item && itemStack.getCount() > 0;
+
+                }).findFirst()
+                .orElse(-1);
+    }
+
+    public static int findAirInHotbar() {
+        return IntStream.range(0, 9)
+                .filter(i -> {
+                    final ItemStack itemStack = mc.player.getInventory().getMainStacks().get(i);
+                    return itemStack == ItemStack.EMPTY && itemStack.getCount() > 0;
 
                 }).findFirst()
                 .orElse(-1);
@@ -136,6 +153,14 @@ public final class InventoryUtility {
 
     public static void drop(final ScreenHandler screenHandler, final int slot) {
         mc.interactionManager.clickSlot(screenHandler.syncId, slot, 1, SlotActionType.THROW, mc.player);
+    }
+
+    public static void shiftClick(GenericContainerScreen container, final int slot, final int mouseButton) {
+        HandledScreenAccessor handledScreen = (HandledScreenAccessor) container;
+        Slot slotI = container.getScreenHandler().slots.get(slot);
+        int screenX = handledScreen.getX() + slotI.x + 8;
+        int screenY = handledScreen.getY() + slotI.y + 8;
+        container.mouseClicked(new Click(screenX, screenY, new MouseInput(0, 1)), false);
     }
 
     public static void shiftClick(final ScreenHandler screenHandler, final int slot, final int mouseButton) {

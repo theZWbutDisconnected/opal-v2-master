@@ -1,17 +1,12 @@
 package wtf.opal.client.feature.module.impl.utility.inventory;
 
 import net.hypixel.data.type.GameType;
-import net.minecraft.block.PlayerSkullBlock;
-import net.minecraft.block.SkullBlock;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.EquippableComponent;
-import net.minecraft.enchantment.Enchantments;
 import wtf.opal.client.feature.module.impl.combat.killaura.KillAuraModule;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
@@ -27,7 +22,6 @@ import wtf.opal.client.feature.module.repository.ModuleRepository;
 import wtf.opal.event.impl.game.PreGameTickEvent;
 import wtf.opal.event.subscriber.Subscribe;
 import wtf.opal.utility.player.InventoryUtility;
-import wtf.opal.utility.player.PlayerUtility;
 
 import java.util.*;
 import java.util.stream.Collectors;

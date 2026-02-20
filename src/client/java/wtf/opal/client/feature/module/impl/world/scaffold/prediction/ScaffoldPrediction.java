@@ -308,34 +308,34 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                     }
                 }
                 float currentYaw = this.getCurrentYaw();
-                float yawDiffTo180 = RotationUtil.wrapAngleDiff(currentYaw - 180.0F, mc.player.lastYaw);
+                float yawDiffTo180 = RotationUtility.wrapAngleDiff(currentYaw - 180.0F, mc.player.lastYaw);
                 float diagonalYaw = this.isDiagonal(currentYaw)
                         ? yawDiffTo180
-                        : RotationUtil.wrapAngleDiff(currentYaw - 135.0F * ((currentYaw + 180.0F) % 90.0F < 45.0F ? 1.0F : -1.0F), mc.player.lastYaw);
+                        : RotationUtility.wrapAngleDiff(currentYaw - 135.0F * ((currentYaw + 180.0F) % 90.0F < 45.0F ? 1.0F : -1.0F), mc.player.lastYaw);
                 if (!this.canRotate) {
                     switch (this.settings.getRotationMode()) {
                         case DEFAULT:
                             if (this.yaw == -180.0F && this.pitch == 0.0F) {
-                                this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
-                                this.pitch = RotationUtil.quantizeAngle(85.0F);
+                                this.yaw = RotationUtility.quantizeAngle(diagonalYaw);
+                                this.pitch = RotationUtility.quantizeAngle(85.0F);
                             } else {
-                                this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
+                                this.yaw = RotationUtility.quantizeAngle(diagonalYaw);
                             }
                             break;
                         case BACKWARDS:
                             if (this.yaw == -180.0F && this.pitch == 0.0F) {
-                                this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
-                                this.pitch = RotationUtil.quantizeAngle(85.0F);
+                                this.yaw = RotationUtility.quantizeAngle(yawDiffTo180);
+                                this.pitch = RotationUtility.quantizeAngle(85.0F);
                             } else {
-                                this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
+                                this.yaw = RotationUtility.quantizeAngle(yawDiffTo180);
                             }
                             break;
                         case SIDEWAYS:
                             if (this.yaw == -180.0F && this.pitch == 0.0F) {
-                                this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
-                                this.pitch = RotationUtil.quantizeAngle(85.0F);
+                                this.yaw = RotationUtility.quantizeAngle(diagonalYaw);
+                                this.pitch = RotationUtility.quantizeAngle(85.0F);
                             } else {
-                                this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
+                                this.yaw = RotationUtility.quantizeAngle(diagonalYaw);
                             }
                     }
                 }
@@ -373,9 +373,9 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                                 double relX = (double) blockData.blockPos().getX() + dx - mc.player.getX();
                                 double relY = (double) blockData.blockPos().getY() + dy - mc.player.getY() - (double) mc.player.getEyeHeight(EntityPose.STANDING);
                                 double relZ = (double) blockData.blockPos().getZ() + dz - mc.player.getZ();
-                                float baseYaw = RotationUtil.wrapAngleDiff(this.yaw, mc.player.lastYaw);
-                                float[] rotations = RotationUtil.getRotationsTo(relX, relY, relZ, baseYaw, this.pitch);
-                                HitResult mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.player.getBlockInteractionRange(), 1.0F);
+                                float baseYaw = RotationUtility.wrapAngleDiff(this.yaw, mc.player.lastYaw);
+                                float[] rotations = RotationUtility.getRotationsTo(relX, relY, relZ, baseYaw, this.pitch);
+                                HitResult mop = RotationUtility.rayTrace(rotations[0], rotations[1], mc.player.getBlockInteractionRange(), 1.0F);
                                 if (mop != null
                                         && mop.getType() == HitResult.Type.BLOCK
                                         && mop.getPos().equals(blockData.blockPos().toCenterPos())
@@ -400,10 +400,10 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                 if (this.canRotate && mc.options.forwardKey.isPressed() && Math.abs(MathHelper.wrapDegrees(yawDiffTo180 - this.yaw)) < 90.0F) {
                     switch (this.settings.getRotationMode()) {
                         case RotationMode.BACKWARDS:
-                            this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
+                            this.yaw = RotationUtility.quantizeAngle(yawDiffTo180);
                             break;
                         case RotationMode.SIDEWAYS:
-                            this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
+                            this.yaw = RotationUtility.quantizeAngle(diagonalYaw);
                     }
                 }
                 if (this.settings.getRotationMode() != RotationMode.NONE) {
@@ -413,15 +413,15 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                         float yawDiff = MathHelper.wrapDegrees(this.yaw - mc.player.lastYaw);
                         float tolerance = (this.rotationTick >= 2 ? RandomUtility.getRandomFloat(90.0F, 95.0F) : RandomUtility.getRandomFloat(30.0F, 35.0F)) * (float) this.getSettings().getRotationSpeed();
                         if (Math.abs(yawDiff) > tolerance) {
-                            float clampedYaw = RotationUtil.clampAngle(yawDiff, tolerance);
-                            targetYaw = RotationUtil.quantizeAngle(mc.player.lastYaw + clampedYaw);
+                            float clampedYaw = RotationUtility.clampAngle(yawDiff, tolerance);
+                            targetYaw = RotationUtility.quantizeAngle(mc.player.lastYaw + clampedYaw);
                             this.rotationTick = Math.max(this.rotationTick, 1);
                         }
                     }
                     if (this.isTowering()) {
                         float yawDelta = MathHelper.wrapDegrees(mc.player.getYaw() - mc.player.lastYaw);
-                        targetYaw = RotationUtil.quantizeAngle(mc.player.lastYaw + yawDelta * RandomUtility.getRandomFloat(0.98F, 0.99F));
-                        targetPitch = RotationUtil.quantizeAngle(RandomUtility.getRandomFloat(30.0F, 80.0F));
+                        targetYaw = RotationUtility.quantizeAngle(mc.player.lastYaw + yawDelta * RandomUtility.getRandomFloat(0.98F, 0.99F));
+                        targetPitch = RotationUtility.quantizeAngle(RandomUtility.getRandomFloat(30.0F, 80.0F));
                         this.rotationTick = 3;
                         this.towering = true;
                     }
@@ -436,7 +436,7 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                             if (blockData == null) {
                                 break;
                             }
-                            HitResult mop = RotationUtil.rayTrace(this.yaw, this.pitch, mc.player.getBlockInteractionRange(), 1.0F);
+                            HitResult mop = RotationUtility.rayTrace(this.yaw, this.pitch, mc.player.getBlockInteractionRange(), 1.0F);
                             if (mop != null
                                     && mop.getType() == HitResult.Type.BLOCK
                                     && mop.getPos().equals(blockData.blockPos())
@@ -447,11 +447,11 @@ public class ScaffoldPrediction extends Module implements IslandTrigger {
                                 double dx = hitVec.getX() - mc.player.getX();
                                 double dy = hitVec.getY() - mc.player.getY() - (double) mc.player.getEyeHeight(EntityPose.STANDING);
                                 double dz = hitVec.getZ() - mc.player.getZ();
-                                float[] rotations = RotationUtil.getRotationsTo(dx, dy, dz, mc.player.lastYaw, mc.player.lastPitch);
+                                float[] rotations = RotationUtility.getRotationsTo(dx, dy, dz, mc.player.lastYaw, mc.player.lastPitch);
                                 if (!(Math.abs(rotations[0] - this.yaw) < 120.0F) || !(Math.abs(rotations[1] - this.pitch) < 60.0F)) {
                                     break;
                                 }
-                                mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.player.getBlockInteractionRange(), 1.0F);
+                                mop = RotationUtility.rayTrace(rotations[0], rotations[1], mc.player.getBlockInteractionRange(), 1.0F);
                                 if (mop == null
                                         || mop.getType() != HitResult.Type.BLOCK
                                         || !mop.getPos().equals(blockData.blockPos())
