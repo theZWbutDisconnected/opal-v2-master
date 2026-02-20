@@ -105,7 +105,13 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
     }
 
     @Inject(method = "handlePacket", at = @At("HEAD"), cancellable = true, require = 1)
-    private static void hookReceivePacket(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
+    private static <T extends PacketListener> void hookReceivePacket(Packet<T> packet, T listener, CallbackInfo ci) {
+        if (packet instanceof EnterReconfigurationS2CPacket) {
+            ci.cancel();
+            LOGGER.debug("忽略EnterReconfigurationS2CPacket，避免Netty错误");
+            return;
+        }
+        
         if (packet instanceof BundleS2CPacket bundleS2CPacket) {
             ci.cancel();
 
@@ -124,37 +130,28 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
             ci.cancel();
         }
     }
-
-    @Inject(
-            method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
-            at = @At("HEAD"),
-            cancellable = true
-    )
-    private void hookChannelReadHead(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci) {
-        if (this.getSide() == NetworkSide.CLIENTBOUND && packet instanceof EnterReconfigurationS2CPacket) {
-            return;
-        }
-    }
     
     @Inject(
             method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
             at = @At(value = "HEAD"),
             cancellable = true
     )
+    @SuppressWarnings("unchecked")
     private void hookChannelRead0(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci) {
         if (this.getSide() == NetworkSide.CLIENTBOUND && packet instanceof EnterReconfigurationS2CPacket) {
             ci.cancel();
+            
             try {
-                if (this.channel.isOpen() && this.packetListener != null && this.packetListener.accepts(packet)) {
-                    handlePacket(packet, this.packetListener);
+                if (this.packetListener != null && this.packetListener.accepts(packet)) {
+                    ((Packet<PacketListener>) packet).apply(this.packetListener);
                     this.packetsReceivedCounter++;
-                    LOGGER.debug("EnterReconfigurationS2CPacket处理成功");
                 }
             } catch (UnsupportedOperationException e) {
-                LOGGER.warn("EnterReconfigurationS2CPacket触发Netty错误（已抑制）: {}", e.getMessage());
+                LOGGER.warn("抑制EnterReconfigurationS2CPacket的Netty错误: {}", e.getMessage());
             } catch (Exception e) {
-                LOGGER.warn("EnterReconfigurationS2CPacket处理异常（已抑制）: {}", e.getMessage());
+                LOGGER.warn("抑制EnterReconfigurationS2CPacket的异常: {}", e.getMessage());
             }
+            
             return;
         }
     }
