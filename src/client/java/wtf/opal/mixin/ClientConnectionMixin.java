@@ -93,6 +93,7 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
     @Inject(method = "handlePacket", at = @At("HEAD"), cancellable = true, require = 1)
     private static void hookReceivePacket(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
         if (packet instanceof EnterReconfigurationS2CPacket) {
+            ci.cancel();
             return;
         }
         
@@ -123,6 +124,7 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
     private void hookChannelRead(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci) {
         if (this.getSide() == NetworkSide.CLIENTBOUND) {
             if (packet instanceof EnterReconfigurationS2CPacket) {
+                ci.cancel();
                 return;
             }
             

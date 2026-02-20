@@ -188,7 +188,9 @@ public final class InventoryUtility {
         int targetX = handledScreen.getX() + targetSlotObj.x + 8;
         int targetY = handledScreen.getY() + targetSlotObj.y + 8;
         MouseAccessor accessor = (MouseAccessor) mc.mouse;
-        container.mouseClicked(new Click(sourceX, sourceY, new MouseInput(0, 0)), false);
+        accessor.callOnCursorPos(window, sourceX * mc.getWindow().getScaleFactor(), sourceY * mc.getWindow().getScaleFactor());
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
         accessor.callOnCursorPos(window, targetX * mc.getWindow().getScaleFactor(), targetY * mc.getWindow().getScaleFactor());
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
