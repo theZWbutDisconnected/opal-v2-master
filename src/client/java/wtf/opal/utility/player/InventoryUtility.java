@@ -20,6 +20,7 @@ import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.EmptyBlockView;
 import org.lwjgl.glfw.GLFW;
 import wtf.opal.mixin.HandledScreenAccessor;
+import wtf.opal.mixin.MouseAccessor;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -40,16 +41,6 @@ public final class InventoryUtility {
                 .filter(i -> {
                     final ItemStack itemStack = mc.player.getInventory().getMainStacks().get(i);
                     return itemStack.getItem() == item && itemStack.getCount() > 0;
-
-                }).findFirst()
-                .orElse(-1);
-    }
-
-    public static int findAirInHotbar() {
-        return IntStream.range(0, 9)
-                .filter(i -> {
-                    final ItemStack itemStack = mc.player.getInventory().getMainStacks().get(i);
-                    return itemStack == ItemStack.EMPTY && itemStack.getCount() > 0;
 
                 }).findFirst()
                 .orElse(-1);
@@ -151,16 +142,56 @@ public final class InventoryUtility {
         return filteredSlots;
     }
 
+    public static int findFirstEmptyPlayerInventorySlot() {
+        List<ItemStack> mainStacks = mc.player.getInventory().getMainStacks();
+        for (int i = 0; i < mainStacks.size(); i++) {
+            if (mainStacks.get(i).isEmpty()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public static void drop(final ScreenHandler screenHandler, final int slot) {
         mc.interactionManager.clickSlot(screenHandler.syncId, slot, 1, SlotActionType.THROW, mc.player);
     }
 
     public static void shiftClick(GenericContainerScreen container, final int slot, final int mouseButton) {
         HandledScreenAccessor handledScreen = (HandledScreenAccessor) container;
-        Slot slotI = container.getScreenHandler().slots.get(slot);
-        int screenX = handledScreen.getX() + slotI.x + 8;
-        int screenY = handledScreen.getY() + slotI.y + 8;
-        container.mouseClicked(new Click(screenX, screenY, new MouseInput(0, 1)), false);
+        ScreenHandler handler = container.getScreenHandler();
+        Slot sourceSlot = handler.slots.get(slot);
+        if (sourceSlot == null || !sourceSlot.hasStack()) {
+            return;
+        }
+        int sourceX = handledScreen.getX() + sourceSlot.x + 8;
+        int sourceY = handledScreen.getY() + sourceSlot.y + 8;
+        long window = mc.getWindow().getHandle();
+        int playerSlotStart = -1;
+        int playerSlotEnd = -1;
+        for (int i = 0; i < handler.slots.size(); i++) {
+            Slot s = handler.slots.get(i);
+            if (s.inventory == mc.player.getInventory()) {
+                if (playerSlotStart == -1) playerSlotStart = i;
+                playerSlotEnd = i;
+            }
+        }
+        if (playerSlotStart == -1) return;
+        int targetSlot = -1;
+        for (int i = playerSlotStart; i <= playerSlotEnd; i++) {
+            if (!handler.slots.get(i).hasStack()) {
+                targetSlot = i;
+                break;
+            }
+        }
+        if (targetSlot == -1) return;
+        Slot targetSlotObj = handler.slots.get(targetSlot);
+        int targetX = handledScreen.getX() + targetSlotObj.x + 8;
+        int targetY = handledScreen.getY() + targetSlotObj.y + 8;
+        MouseAccessor accessor = (MouseAccessor) mc.mouse;
+        container.mouseClicked(new Click(sourceX, sourceY, new MouseInput(0, 0)), false);
+        accessor.callOnCursorPos(window, targetX * mc.getWindow().getScaleFactor(), targetY * mc.getWindow().getScaleFactor());
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
     }
 
     public static void shiftClick(final ScreenHandler screenHandler, final int slot, final int mouseButton) {

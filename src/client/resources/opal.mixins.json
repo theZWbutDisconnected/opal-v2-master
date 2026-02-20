@@ -53,6 +53,7 @@
     "MessageHandlerMixin",
     "MinecraftClientAccessor",
     "MinecraftClientMixin",
+    "MouseAccessor",
     "MouseMixin",
     "PlayerEntityMixin",
     "PlayerEntityModelMixin",
