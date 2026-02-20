@@ -9,6 +9,7 @@ import net.minecraft.network.OffThreadException;
 import net.minecraft.network.listener.PacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BundleS2CPacket;
+import net.minecraft.network.packet.s2c.play.EnterReconfigurationS2CPacket;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -91,6 +92,10 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
 
     @Inject(method = "handlePacket", at = @At("HEAD"), cancellable = true, require = 1)
     private static void hookReceivePacket(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
+        if (packet instanceof EnterReconfigurationS2CPacket) {
+            return;
+        }
+        
         if (packet instanceof BundleS2CPacket bundleS2CPacket) {
             ci.cancel();
 
@@ -117,6 +122,10 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
     )
     private void hookChannelRead(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci) {
         if (this.getSide() == NetworkSide.CLIENTBOUND) {
+            if (packet instanceof EnterReconfigurationS2CPacket) {
+                return;
+            }
+            
             if (packet instanceof BundleS2CPacket bundleS2CPacket) {
                 ci.cancel();
 

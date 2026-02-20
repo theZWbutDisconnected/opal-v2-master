@@ -1,6 +1,7 @@
 package wtf.opal.client.feature.module.impl.utility.inventory.manager;
 
 import net.hypixel.data.type.GameType;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ToolComponent;
