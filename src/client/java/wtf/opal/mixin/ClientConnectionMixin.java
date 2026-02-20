@@ -46,7 +46,11 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
 
     @Shadow private int packetsReceivedCounter;
 
-    @Shadow private Channel channel;
+    @Shadow
+    private Channel channel;
+    
+    @Unique
+    private boolean isHandlingReconfiguration = false;
 
     @Shadow protected abstract void channelRead0(ChannelHandlerContext channelHandlerContext, Packet<?> packet);
 
@@ -70,6 +74,11 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
             cancellable = true
     )
     private void hookSendPacket(Packet<?> packet, CallbackInfo ci) {
+        if (packet instanceof EnterReconfigurationS2CPacket) {
+            LOGGER.debug("发送EnterReconfigurationS2CPacket");
+            return;
+        }
+        
         InstantaneousSendPacketEvent event = new InstantaneousSendPacketEvent(packet);
         EventDispatcher.dispatch(event);
         if (event.isCancelled() || OutboundNetworkBlockage.get().isBlocked(packet)) {
@@ -83,6 +92,11 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
             cancellable = true
     )
     private void hookSendPacket(Packet<?> packet, @Nullable ChannelFutureListener channelFutureListener, CallbackInfo ci) {
+        if (packet instanceof EnterReconfigurationS2CPacket) {
+            LOGGER.debug("发送EnterReconfigurationS2CPacket（带监听器）");
+            return;
+        }
+        
         final SendPacketEvent event = new SendPacketEvent(packet);
         EventDispatcher.dispatch(event);
         if (event.isCancelled()) {
@@ -92,11 +106,6 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
 
     @Inject(method = "handlePacket", at = @At("HEAD"), cancellable = true, require = 1)
     private static void hookReceivePacket(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
-        if (packet instanceof EnterReconfigurationS2CPacket) {
-            ci.cancel();
-            return;
-        }
-        
         if (packet instanceof BundleS2CPacket bundleS2CPacket) {
             ci.cancel();
 
@@ -118,16 +127,45 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
 
     @Inject(
             method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private void hookChannelReadHead(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci) {
+        if (this.getSide() == NetworkSide.CLIENTBOUND && packet instanceof EnterReconfigurationS2CPacket) {
+            return;
+        }
+    }
+    
+    @Inject(
+            method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    private void hookChannelRead0(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci) {
+        if (this.getSide() == NetworkSide.CLIENTBOUND && packet instanceof EnterReconfigurationS2CPacket) {
+            ci.cancel();
+            try {
+                if (this.channel.isOpen() && this.packetListener != null && this.packetListener.accepts(packet)) {
+                    handlePacket(packet, this.packetListener);
+                    this.packetsReceivedCounter++;
+                    LOGGER.debug("EnterReconfigurationS2CPacket处理成功");
+                }
+            } catch (UnsupportedOperationException e) {
+                LOGGER.warn("EnterReconfigurationS2CPacket触发Netty错误（已抑制）: {}", e.getMessage());
+            } catch (Exception e) {
+                LOGGER.warn("EnterReconfigurationS2CPacket处理异常（已抑制）: {}", e.getMessage());
+            }
+            return;
+        }
+    }
+
+    @Inject(
+            method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
             at = @At(value = "INVOKE", target = "Lio/netty/channel/Channel;isOpen()Z"),
             cancellable = true
     )
     private void hookChannelRead(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci) {
         if (this.getSide() == NetworkSide.CLIENTBOUND) {
-            if (packet instanceof EnterReconfigurationS2CPacket) {
-                ci.cancel();
-                return;
-            }
-            
             if (packet instanceof BundleS2CPacket bundleS2CPacket) {
                 ci.cancel();
 
@@ -138,6 +176,7 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
                 }
                 return;
             }
+            
             InstantaneousReceivePacketEvent event = new InstantaneousReceivePacketEvent(packet);
             EventDispatcher.dispatch(event);
             if (event.isCancelled() || InboundNetworkBlockage.get().isBlocked(packet)) {
@@ -153,20 +192,29 @@ public abstract class ClientConnectionMixin implements ClientConnectionAccess {
             PacketListener packetListener = this.packetListener;
             if (packetListener == null) {
                 throw new IllegalStateException("Received a packet before the packet listener was initialized");
-            } else {
-                if (packetListener.accepts(packet)) {
-                    try {
-                        handlePacket(packet, packetListener);
-                    } catch (OffThreadException var5) {
-                    } catch (RejectedExecutionException var6) {
-                        this.disconnect(Text.translatable("multiplayer.disconnect.server_shutdown"));
-                    } catch (ClassCastException var7) {
-                        LOGGER.error("Received {} that couldn't be processed", packet.getClass(), var7);
-                        this.disconnect(Text.translatable("multiplayer.disconnect.invalid_packet"));
+            } else
+            if (packetListener.accepts(packet)) {
+                try {
+                    handlePacket(packet, packetListener);
+                } catch (OffThreadException var5) {
+                } catch (RejectedExecutionException var6) {
+                    this.disconnect(Text.translatable("multiplayer.disconnect.server_shutdown"));
+                } catch (ClassCastException var7) {
+                    LOGGER.error("Received {} that couldn't be processed", packet.getClass(), var7);
+                    this.disconnect(Text.translatable("multiplayer.disconnect.invalid_packet"));
+                } catch (UnsupportedOperationException var8) {
+                    if (packet instanceof EnterReconfigurationS2CPacket) {
+                        LOGGER.warn("抑制EnterReconfigurationS2CPacket的Netty错误，保持连接: {}", var8.getMessage());
+                        return;
                     }
-
-                    this.packetsReceivedCounter++;
+                    LOGGER.error("Netty error processing packet {}: {}", packet.getClass(), var8.getMessage());
+                    throw var8;
+                } catch (Exception var9) {
+                    LOGGER.error("Exception processing packet {}: {}", packet.getClass(), var9.getMessage());
+                    throw var9;
                 }
+
+                this.packetsReceivedCounter++;
             }
         }
     }
