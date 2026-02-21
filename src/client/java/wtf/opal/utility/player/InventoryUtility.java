@@ -13,6 +13,7 @@ import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.*;
 import net.minecraft.registry.*;
 import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -198,10 +199,47 @@ public final class InventoryUtility {
 
     public static void shiftClick(final ScreenHandler screenHandler, final int slot, final int mouseButton) {
         mc.interactionManager.clickSlot(screenHandler.syncId, slot, mouseButton, SlotActionType.QUICK_MOVE, mc.player);
+        long window = mc.getWindow().getHandle();
+        Slot sourceSlot = screenHandler.slots.get(slot);
+        int amount = 0;
+        if (sourceSlot.getStack().isIn(ItemTags.HEAD_ARMOR) || sourceSlot.getStack().isIn(ItemTags.HEAD_ARMOR_ENCHANTABLE)) amount = 0;
+        if (sourceSlot.getStack().isIn(ItemTags.CHEST_ARMOR) || sourceSlot.getStack().isIn(ItemTags.CHEST_ARMOR_ENCHANTABLE)) amount = 1;
+        if (sourceSlot.getStack().isIn(ItemTags.LEG_ARMOR) || sourceSlot.getStack().isIn(ItemTags.LEG_ARMOR_ENCHANTABLE)) amount = 2;
+        if (sourceSlot.getStack().isIn(ItemTags.FOOT_ARMOR) || sourceSlot.getStack().isIn(ItemTags.FOOT_ARMOR_ENCHANTABLE)) amount = 3;
+        Slot targetSlotObj = screenHandler.slots.get(slot + 5 + amount);
+        int sourceX = sourceSlot.x + 8;
+        int sourceY = sourceSlot.y + 8;
+        int targetX = targetSlotObj.x + 8;
+        int targetY = targetSlotObj.y + 8;
+        MouseAccessor accessor = (MouseAccessor) mc.mouse;
+        int guiX = mc.getWindow().getWidth() / 2 - 176 * mc.getWindow().getScaleFactor() / 2;
+        int guiY = mc.getWindow().getHeight() / 2 - 166 * mc.getWindow().getScaleFactor() / 2;
+        accessor.callOnCursorPos(window, guiX + sourceX * mc.getWindow().getScaleFactor(), guiY + sourceY * mc.getWindow().getScaleFactor());
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
+        accessor.callOnCursorPos(window, guiX + targetX * mc.getWindow().getScaleFactor(), guiY + targetY * mc.getWindow().getScaleFactor());
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
     }
 
-    public static void swap(final ScreenHandler screenHandler, final int originalSlot, final int newSlot) {
-        mc.interactionManager.clickSlot(screenHandler.syncId, originalSlot, newSlot, SlotActionType.SWAP, mc.player);
+    public static void swap(final ScreenHandler screenHandler, final int originalSlot, int newSlot) {
+//        mc.interactionManager.clickSlot(screenHandler.syncId, originalSlot, newSlot, SlotActionType.SWAP, mc.player);
+        long window = mc.getWindow().getHandle();
+        Slot sourceSlot = screenHandler.slots.get(originalSlot);
+        Slot targetSlotObj = screenHandler.slots.get(newSlot + 36);
+        int sourceX = sourceSlot.x + 8;
+        int sourceY = sourceSlot.y + 8;
+        int targetX = targetSlotObj.x + 8;
+        int targetY = targetSlotObj.y + 8;
+        MouseAccessor accessor = (MouseAccessor) mc.mouse;
+        int guiX = mc.getWindow().getWidth() / 2 - 176 * mc.getWindow().getScaleFactor() / 2;
+        int guiY = mc.getWindow().getHeight() / 2 - 166 * mc.getWindow().getScaleFactor() / 2;
+        accessor.callOnCursorPos(window, guiX + sourceX * mc.getWindow().getScaleFactor(), guiY + sourceY * mc.getWindow().getScaleFactor());
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
+        accessor.callOnCursorPos(window, guiX + targetX * mc.getWindow().getScaleFactor(), guiY + targetY * mc.getWindow().getScaleFactor());
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
     }
 
     public static int calculateEnchantmentLevel(final ItemStack itemStack, final RegistryKey<Enchantment> enchantment) {
