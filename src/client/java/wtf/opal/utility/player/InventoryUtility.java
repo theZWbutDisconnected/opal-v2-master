@@ -195,10 +195,13 @@ public final class InventoryUtility {
         accessor.callOnCursorPos(window, targetX * mc.getWindow().getScaleFactor(), targetY * mc.getWindow().getScaleFactor());
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
+        accessor.callOnCursorPos(window, 0, 0);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
     }
 
     public static void shiftClick(final ScreenHandler screenHandler, final int slot, final int mouseButton) {
-        mc.interactionManager.clickSlot(screenHandler.syncId, slot, mouseButton, SlotActionType.QUICK_MOVE, mc.player);
+//        mc.interactionManager.clickSlot(screenHandler.syncId, slot, mouseButton, SlotActionType.QUICK_MOVE, mc.player);
         long window = mc.getWindow().getHandle();
         Slot sourceSlot = screenHandler.slots.get(slot);
         int amount = 0;
@@ -206,7 +209,7 @@ public final class InventoryUtility {
         if (sourceSlot.getStack().isIn(ItemTags.CHEST_ARMOR) || sourceSlot.getStack().isIn(ItemTags.CHEST_ARMOR_ENCHANTABLE)) amount = 1;
         if (sourceSlot.getStack().isIn(ItemTags.LEG_ARMOR) || sourceSlot.getStack().isIn(ItemTags.LEG_ARMOR_ENCHANTABLE)) amount = 2;
         if (sourceSlot.getStack().isIn(ItemTags.FOOT_ARMOR) || sourceSlot.getStack().isIn(ItemTags.FOOT_ARMOR_ENCHANTABLE)) amount = 3;
-        Slot targetSlotObj = screenHandler.slots.get(slot + 5 + amount);
+        Slot targetSlotObj = screenHandler.slots.get(5 + amount);
         int sourceX = sourceSlot.x + 8;
         int sourceY = sourceSlot.y + 8;
         int targetX = targetSlotObj.x + 8;
@@ -218,6 +221,9 @@ public final class InventoryUtility {
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
         accessor.callOnCursorPos(window, guiX + targetX * mc.getWindow().getScaleFactor(), guiY + targetY * mc.getWindow().getScaleFactor());
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
+        accessor.callOnCursorPos(window, 0, 0);
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
     }
@@ -238,6 +244,9 @@ public final class InventoryUtility {
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
         accessor.callOnCursorPos(window, guiX + targetX * mc.getWindow().getScaleFactor(), guiY + targetY * mc.getWindow().getScaleFactor());
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
+        accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
+        accessor.callOnCursorPos(window, 0, 0);
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 1);
         accessor.callOnMouseButton(window, new MouseInput(0, 0), 0);
     }

@@ -102,7 +102,7 @@ public final class InventoryManagerModule extends Module {
                 return;
             }
 
-            if (validSlot.getStack().getItem().getComponents().get(DataComponentTypes.EQUIPPABLE) != null) {
+            if (validSlot.getStack().getComponents().get(DataComponentTypes.EQUIPPABLE) != null) {
                 return;
             }
 

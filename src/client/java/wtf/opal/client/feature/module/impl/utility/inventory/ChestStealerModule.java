@@ -35,11 +35,16 @@ ChestStealerModule extends Module {
     private final BooleanProperty highlight = new BooleanProperty("Highlight items", true).hideIf(() -> !smart.getValue());
 
     private final BoundedNumberProperty delay = new BoundedNumberProperty("Delay", 50, 100, 0, 400, 5);
+    private final BoundedNumberProperty startDelay = new BoundedNumberProperty("Start delay", 200, 250, 0, 400, 5);
+
+    private boolean start = false;
 
     public ChestStealerModule() {
         super("Chest Stealer", "Steals only useful or upgraded items from chests.", ModuleCategory.UTILITY);
-        addProperties(smart, highlight, delay);
+        addProperties(smart, highlight, delay, startDelay);
     }
+
+    private long lastChestOpenTime = 0;
 
     @Subscribe
     public void onPreGameTickEvent(final PreGameTickEvent event) {
@@ -49,7 +54,22 @@ ChestStealerModule extends Module {
         final Inventory chestInventory = screenHandler.getInventory();
 
         if (!container.getTitle().getString().toLowerCase().contains("chest")) return;
-        if (chestInventory.isEmpty() || InventoryUtility.isInventoryFull()) {
+        if (InventoryUtility.isInventoryFull()) {
+            start = false;
+            container.close();
+            return;
+        }
+
+        boolean isActuallyEmpty = true;
+        for (int i = 0; i < chestInventory.size(); i++) {
+            if (!chestInventory.getStack(i).isEmpty()) {
+                isActuallyEmpty = false;
+                break;
+            }
+        }
+
+        if (isActuallyEmpty) {
+            start = false;
             container.close();
             return;
         }
@@ -61,31 +81,67 @@ ChestStealerModule extends Module {
 
         boolean tookItem = false;
 
-        for (int i = 0; i < chestInventory.size(); i++) {
-            final ItemStack stack = chestInventory.getStack(i);
-            if (stack.isEmpty()) continue;
-
-            if (canMove() && (shouldTake(stack, bestChestArmor, bestChestSword, bestChestPickaxe, bestChestAxe) || !smart.getValue())) {
-                InventoryUtility.shiftClick(container, i, 0);
-                stopwatch.reset();
-                tookItem = true;
-                break;
-            }
-        }
-
-        if (smart.getValue() && !tookItem) {
-            boolean hasValuableLeft = false;
+        if (smart.getValue()) {
             for (int i = 0; i < chestInventory.size(); i++) {
                 final ItemStack stack = chestInventory.getStack(i);
                 if (stack.isEmpty()) continue;
 
-                if (shouldTake(stack, bestChestArmor, bestChestSword, bestChestPickaxe, bestChestAxe)) {
-                    hasValuableLeft = true;
+                if (canMove() && shouldTake(stack, bestChestArmor, bestChestSword, bestChestPickaxe, bestChestAxe)) {
+                    if (!start) {
+                        start = true;
+                        lastChestOpenTime = System.currentTimeMillis();
+                    }
+                    InventoryUtility.shiftClick(container, i, 0);
+                    stopwatch.reset();
+                    tookItem = true;
                     break;
                 }
             }
 
-            if (!hasValuableLeft) {
+            if (!tookItem) {
+                boolean hasValuableLeft = false;
+                for (int i = 0; i < chestInventory.size(); i++) {
+                    final ItemStack stack = chestInventory.getStack(i);
+                    if (stack.isEmpty()) continue;
+
+                    if (shouldTake(stack, bestChestArmor, bestChestSword, bestChestPickaxe, bestChestAxe)) {
+                        hasValuableLeft = true;
+                        break;
+                    }
+                }
+
+                if (!hasValuableLeft && System.currentTimeMillis() - lastChestOpenTime > 1000) {
+                    start = false;
+                    container.close();
+                }
+            }
+        } else {
+            for (int i = 0; i < chestInventory.size(); i++) {
+                final ItemStack stack = chestInventory.getStack(i);
+                if (stack.isEmpty()) continue;
+
+                if (canMove()) {
+                    if (!start) {
+                        start = true;
+                        lastChestOpenTime = System.currentTimeMillis();
+                    }
+                    InventoryUtility.shiftClick(container, i, 0);
+                    stopwatch.reset();
+                    tookItem = true;
+                    break;
+                }
+            }
+
+            boolean isEmpty = true;
+            for (int i = 0; i < chestInventory.size(); i++) {
+                if (!chestInventory.getStack(i).isEmpty()) {
+                    isEmpty = false;
+                    break;
+                }
+            }
+
+            if (isEmpty && System.currentTimeMillis() - lastChestOpenTime > 1000) {
+                start = false;
                 container.close();
             }
         }
@@ -206,7 +262,7 @@ ChestStealerModule extends Module {
     }
 
     public boolean canMove() {
-        final long delayMs = delay.getRandomValue().longValue();
+        final long delayMs = start ? delay.getRandomValue().longValue() : startDelay.getRandomValue().longValue();
         return delayMs == 0 || stopwatch.hasTimeElapsed(delayMs);
     }
 }
