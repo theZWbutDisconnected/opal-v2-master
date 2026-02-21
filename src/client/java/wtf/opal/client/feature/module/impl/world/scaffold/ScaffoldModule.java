@@ -148,9 +148,17 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
                 mc.crosshairTarget = this.rotation.hitResult();
             }
 
+            boolean rotationCompleted = true;
+            if (rotation != null) {
+                final Vec2f currentRotation = new Vec2f(mc.player.getYaw(), mc.player.getPitch());
+                final Vec2f targetRotation = rotation.rotation();
+                final double rotationDifference = RotationUtility.getRotationDifference(currentRotation, targetRotation);
+                rotationCompleted = rotationDifference < 5.0;
+            }
+
             final Block blockOver = PlayerUtility.getBlockOver();
 
-            if (!InventoryUtility.isBlockInteractable(blockOver) && isBlock) {
+            if (!InventoryUtility.isBlockInteractable(blockOver) && isBlock && rotationCompleted) {
                 final MouseButton rightButton = MouseHelper.getRightButton();
                 rightButton.setPressed();
                 if (this.settings.getSwingMode().getValue() == ScaffoldSettings.SwingMode.SERVER) {
