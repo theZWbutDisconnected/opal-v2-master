@@ -76,7 +76,7 @@ public final class ModuleElement implements Comparable<ModuleElement> {
         );
     }
 
-    private static final NVGTextRenderer FONT = FontRepository.getFont("productsans-medium");
+    private static final NVGTextRenderer FONT = FontRepository.getFont("productsans-bold");
     public static final float OFFSET = 12.F;
 
     private String text;

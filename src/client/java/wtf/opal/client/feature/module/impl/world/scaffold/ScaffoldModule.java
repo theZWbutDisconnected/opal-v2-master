@@ -28,7 +28,6 @@ import wtf.opal.client.feature.helper.impl.player.rotation.model.impl.InstantRot
 import wtf.opal.client.feature.helper.impl.player.slot.SlotHelper;
 import wtf.opal.client.feature.helper.impl.player.swing.SwingDelay;
 import wtf.opal.client.feature.helper.impl.render.FadingBlockHelper;
-import wtf.opal.client.feature.helper.impl.server.impl.HypixelServer;
 import wtf.opal.client.feature.module.Module;
 import wtf.opal.client.feature.module.ModuleCategory;
 import wtf.opal.client.feature.module.impl.movement.flight.FlightModule;
@@ -46,7 +45,6 @@ import wtf.opal.event.impl.render.RenderWorldEvent;
 import wtf.opal.event.subscriber.Subscribe;
 import wtf.opal.mixin.LivingEntityAccessor;
 import wtf.opal.utility.misc.chat.ChatUtility;
-import wtf.opal.utility.misc.math.RandomUtility;
 import wtf.opal.utility.player.*;
 import wtf.opal.utility.render.ColorUtility;
 import wtf.opal.utility.render.CustomRenderLayers;
@@ -67,7 +65,7 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
 
     private Vec3d preExpandPos;
     private RaytracedRotation rotation;
-
+    private Vec3d lastPlayerPos;
     private Map<Integer, Integer> realStackSizeMap;
 
     public ScaffoldModule() {
@@ -87,12 +85,10 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
     @Override
     protected void onEnable() {
         super.onEnable();
-
         blockCache = null;
         rotation = null;
-
+        lastPlayerPos = mc.player != null ? mc.player.getEntityPos() : Vec3d.ZERO;
         this.realStackSizeMap = new HashMap<>();
-
         if (mc.player == null) return;
         sameYPos = MathHelper.floor(mc.player.getY());
     }
@@ -252,11 +248,23 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
             blockCache = null;
             return;
         }
+
+        Vec3d currentPos = mc.player.getEntityPos();
+        if (lastPlayerPos != null && currentPos.distanceTo(lastPlayerPos) > 5.0) {
+            this.blockCache = null;
+            this.rotation = null;
+            this.intelligentRotation = null;
+        }
+        lastPlayerPos = currentPos;
+        
         if (this.settings.isSameYEnabled() && this.settings.isAutoJump() && mc.player.isOnGround()) {
             RotationMouseHandler handler = RotationHelper.getHandler();
             if(mc.player != null) {
                 if(rotation != null) {
-                    handler.rotate(new Vec2f(mc.gameRenderer.getCamera().getYaw() + (44f * Math.signum(rotation.rotation().x)), mc.gameRenderer.getCamera().getPitch()), InstantRotationModel.INSTANCE);
+                    float targetDeltaYaw;
+                    if (this.settings.getMode().getValue().equals(ScaffoldSettings.Mode.WATCHDOG)) targetDeltaYaw = rotation.rotation().x;
+                    else targetDeltaYaw = 44f * Math.signum(rotation.rotation().x);
+                    handler.rotate(new Vec2f(mc.gameRenderer.getCamera().getYaw() + targetDeltaYaw, mc.gameRenderer.getCamera().getPitch()), InstantRotationModel.INSTANCE);
                 }
             }
             this.rotation = null;
@@ -321,11 +329,13 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
 
         if (rotation != null) {
             if (!settings.isSnapRotationsEnabled() || blockCache != null) {
-                final IRotationModel model = (LocalDataWatch.get().getKnownServerManager().getCurrentServer() instanceof HypixelServer && this.settings.getMode().is(ScaffoldSettings.Mode.WATCHDOG)) ? new HypixelRotationModel() : settings.createRotationModel();
-                RotationHelper.getHandler().rotate(
-                        rotation.rotation(),
-                        model
-                );
+                if (MoveUtility.isMoving()) {
+                    final IRotationModel model = (this.settings.getMode().is(ScaffoldSettings.Mode.WATCHDOG)) ? new HypixelRotationModel() : settings.createRotationModel();
+                    RotationHelper.getHandler().rotate(
+                            rotation.rotation(),
+                            model
+                    );
+                }
             }
         }
     }
@@ -340,10 +350,14 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
 
     private void updateMovementIntelligence() {
         if (this.settings.isMovementIntelligence()) {
-            if (!this.settings.getMode().is(ScaffoldSettings.Mode.WATCHDOG) || mc.player.isOnGround() ||
-                    !PlayerUtility.isBoxEmpty(mc.player.getBoundingBox().offset(0.0D, mc.player.getVelocity().getY(), 0.0D))) {
-                final Vec2f currentRotation = rotation != null ? rotation.rotation() : RotationUtility.getRotation();
-                this.intelligentRotation = RotationUtility.getPriorityAngle(currentRotation, this.settings.getMovementIntelligenceSteps(), this.settings.isMovementSnapping(), this.settings.isDiagonalMovement());
+            if (MoveUtility.isMoving()) {
+                if (!this.settings.getMode().is(ScaffoldSettings.Mode.WATCHDOG) || mc.player.isOnGround() ||
+                        !PlayerUtility.isBoxEmpty(mc.player.getBoundingBox().offset(0.0D, mc.player.getVelocity().getY(), 0.0D))) {
+                    final Vec2f currentRotation = rotation != null ? rotation.rotation() : RotationUtility.getRotation();
+                    this.intelligentRotation = RotationUtility.getPriorityAngle(currentRotation, this.settings.getMovementIntelligenceSteps(), this.settings.isMovementSnapping(), this.settings.isDiagonalMovement());
+                }
+            } else {
+                this.intelligentRotation = null;
             }
         }
     }
@@ -397,11 +411,15 @@ public final class ScaffoldModule extends Module implements IslandTrigger {
 
     private RaytracedRotation getRotation(BlockWithDirection data, Vec3d start) {
         final Vec2f sortingAngle;
-        if (this.intelligentRotation != null) {
+        if (this.settings.getMode().is(ScaffoldSettings.Mode.WATCHDOG)) {
+            float moveDirection = MoveUtility.getDirectionDegrees();
+            sortingAngle = new Vec2f(moveDirection + 180, mc.player.getPitch());
+        } else if (this.intelligentRotation != null) {
             sortingAngle = this.intelligentRotation;
         } else {
             sortingAngle = rotation != null ? rotation.rotation() : RotationUtility.getRotation();
         }
+
         return RotationUtility.getRotationFromRaycastedBlock(data.blockPos, data.direction, sortingAngle, start);
     }
 

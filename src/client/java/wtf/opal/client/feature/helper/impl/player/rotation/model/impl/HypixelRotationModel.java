@@ -38,13 +38,12 @@ public class HypixelRotationModel implements IRotationModel {
 
     private float getSpeed() {
 
-        return isYawDiagonal() ? (LocalDataWatch.get().airTicks == 1 ? 65f : 36f)  : 35f;
+        return mc.options.jumpKey.isPressed() ? 360f : (LocalDataWatch.get().airTicks < 2 ? 180f : (isYawDiagonal() ? 80f : 60f));
     }
 
     private boolean isYawDiagonal() {
-        final float direction = Math.abs(MoveUtility.getDirectionDegrees() % 90);
-        final int range = 30;
-        return direction > 45 - range && direction < 45 + range;
+        float absYaw = Math.abs(MoveUtility.getDirectionDegrees() % 90.0F);
+        return absYaw > 20.0F && absYaw < 70.0F;
     }
 
     @Override
